@@ -1,0 +1,12 @@
+name: Simple_shiny_Climatology_app
+title: Simple_shiny_Climatology_app
+username:
+account: scontractor
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 680842
+bundleId: 1891028
+url: https://scontractor.shinyapps.io/Simple_shiny_Climatology_app/
+when: 1550809986.04585
+asMultiple: FALSE
+asStatic: FALSE
