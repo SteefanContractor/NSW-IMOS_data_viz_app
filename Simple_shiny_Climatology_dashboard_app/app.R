@@ -4,6 +4,7 @@ library(ncdf4)
 library(zoo)
 library(lubridate)
 library(readODS)
+library(tidyverse)
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "matht250"#T
@@ -225,7 +226,7 @@ ui <-
   # titlePanel(title = "TEMP climatology at the PH100/NRSPHB site"),
   # br(),
   dashboardPage(#theme = shinythemes::shinytheme("flatly"),
-             dashboardHeader(title = "NSW-IMOS observing programme", titleWidth = 400),
+             dashboardHeader(title = "NSW-IMOS Observing Programme", titleWidth = 400),
              dashboardSidebar(width = 300,
                sidebarMenu(
                  menuItem("Home", tabName = "Home"),
@@ -237,18 +238,28 @@ ui <-
                )
              ),
              dashboardBody(
+               tags$script(HTML("
+        var openTab = function(tabName){
+          $('a', $('.sidebar')).each(function() {
+            if(this.getAttribute('data-value') == tabName) {
+              this.click()
+            };
+          });
+        }
+      ")),
                tabItems(
                  tabItem("Home",
-                         fluidRow(
-                           infoBox(title = "Port Hacking Mooring",subtitle = "Climatology Temperature Today", 22, icon = icon("fire"),
-                                   color = "yellow", fill = T),
-                           infoBox(title = "Coffs Harbour Mooring",subtitle = "Climatology Temperature Today", 19, icon = icon("fire"),
-                                   color = "green", fill = T),
-                           infoBox(title = "Batemans Marine Park Mooring",subtitle = "Climatology Temperature Today", 26, icon = icon("fire"),
-                                   color = "red", fill = T),
-                           infoBox(title = "Sydney Moorings",subtitle = "Climatology Temperature Today", 16, icon = icon("fire"),
-                                   color = "blue", fill = T)
-                         )
+                         # fluidRow(
+                         #   infoBox(title = "Port Hacking Mooring",subtitle = "Climatology Temperature Today", 22, icon = icon("fire"),
+                         #           color = "yellow", fill = T),
+                         #   infoBox(title = "Coffs Harbour Mooring",subtitle = "Climatology Temperature Today", 19, icon = icon("fire"),
+                         #           color = "green", fill = T),
+                         #   infoBox(title = "Batemans Marine Park Mooring",subtitle = "Climatology Temperature Today", 26, icon = icon("fire"),
+                         #           color = "red", fill = T),
+                         #   infoBox(title = "Sydney Moorings",subtitle = "Climatology Temperature Today", 16, icon = icon("fire"),
+                         #           color = "blue", fill = T)
+                         # ),
+                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600)))
                  ),
                  tabItem("PH100_Clim",
                           sidebarLayout(
@@ -292,7 +303,7 @@ ui <-
                           )
                  ),
                  tabItem("About",
-                         leafletOutput("stationMap", height = 800))
+                         leafletOutput("stationMap_About", height = 800))
                )
              )
 )
@@ -358,7 +369,42 @@ server <- function(input, output){
   output$Caption_tab2 <- renderText("TOP: Number of marine temperature anomalies each year.
                                     BOTTOM: The maximum possible number of heat/coldwaves of specified length that can be detected based on the number of missing values in the data. As an example, a value of 80 on the log scale represents 10^80 possibilities for a heat/coldwave.")
   
-  output$stationMap <- renderLeaflet({
+  output$stationMap_Home <- renderLeaflet({
+    stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
+    colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
+    stationLocs <- stationLocs %>% slice(c(3,6,8,9))
+    
+    # generate random temperatures based on climatology distributions
+    doy  = yday(Sys.Date())
+    sd = max((Temp_clim_P90[1,doy] - Temp_clim_mean[1,doy])/1.28, (Temp_clim_mean[1,doy] - Temp_clim_P10[1,doy])/1.28, na.rm = T)
+    rTemps <- rnorm(4, mean = Temp_clim_mean[1,doy], sd = sd)
+    
+    # determine background-color based on climatology and rTemps
+    rBG <- ifelse(rTemps < Temp_clim_P10[1, doy], "rgba(0,0,255,0.5)", 
+                  ifelse(rTemps <= Temp_clim_P90[1, doy], "rgba(0,255,0,0.5)", "rgba(255,0,0,0.5)"))
+    
+    leaflet() %>% addTiles() %>% addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
+                                            label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "CH100") %>% select(site_code), paste(round(rTemps[1],1), "degrees"))),
+                                            labelOptions = labelOptions(noHide = T, direction = "bottom",
+                                                                        style = list("background-color" = rBG[1]))) %>%
+      addMarkers(data = stationLocs %>% filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
+                 label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% select(site_code), paste(round(rTemps[2],1), "degrees"))),
+                 labelOptions = labelOptions(noHide = T, direction = "right",
+                                             style = list("background-color" = rBG[2]))) %>%
+      addMarkers(data = stationLocs %>% filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
+                 label = HTML(paste(sep = "<br/>", 
+                                    a(paste(stationLocs %>% filter(site_code == "PH100") %>% select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
+                                    paste(round(rTemps[3],1), "degrees"))),
+                 labelOptions = labelOptions(noHide = T, direction = "bottom",
+                                             style = list("background-color" = rBG[3],
+                                                          "pointer-events" = "auto"))) %>%
+      addMarkers(data = stationLocs %>% filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
+                 label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "BMP120") %>% select(site_code), paste(round(rTemps[4],1), "degrees"))),
+                 labelOptions = labelOptions(noHide = T, direction = "bottom",
+                                             style = list("background-color" = rBG[4])))
+  })
+  
+  output$stationMap_About <- renderLeaflet({
     stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
     colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
     leaflet() %>% addTiles() %>% addMarkers(data = stationLocs, lat = ~avg_lat, lng = ~avg_lon, popup = ~site_code)
