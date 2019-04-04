@@ -5,6 +5,7 @@ library(zoo)
 library(lubridate)
 library(readODS)
 library(tidyverse)
+library(plotly)
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "matht250"#T
@@ -197,23 +198,32 @@ num.coldwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_d
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
-  plot(0, xlim = c(1,365), ylim = range(Temp_clim_mean, na.rm = T),# y = Temp_Clim_Mean_grid[1,],
-       xlab = "Day of the year", ylab = paste(ifelse(mean, "Mean", "Median"), "temperature"),
-       main = paste("Pressure =", depth, "dbar"))
-  nonNA_days <- which(!is.na(Temp_clim_P90[paste(depth),]) & !is.na(Temp_clim_P10[paste(depth),]))
+  nonNA_days <- which(!is.na(Temp_clim_P90[paste(depth),]) & !is.na(Temp_clim_P10[paste(depth),]) & !is.na(Temp_clim_mean[paste(depth),]))
   yday_noNA <- yday(dates)[nonNA_days]
-  Temp_clim_P90_noNA <- Temp_clim_P90[paste(depth), nonNA_days]
-  Temp_clim_P10_noNA <- Temp_clim_P10[paste(depth), nonNA_days]
-  polygon(x = c(yday_noNA,rev(yday_noNA)),
-          y = c(Temp_clim_P90_noNA,rev(Temp_clim_P10_noNA)),
-          col = "#fa9fb555", border = NA)
-  if (mean) {
+  ylim <- range(Temp_clim_mean, Temp_clim_med, Temp_clim_P10, Temp_clim_P90, na.rm = T)
+  p <- plot_ly(y = ~Temp_clim_P90[paste(depth),yday_noNA], type = 'scatter', mode = 'lines',
+               showlegend = F, name = "90th pc of climatology",
+               line = list(color = "transparent"),
+               hoverlabel = list(namelength = -1)) %>%
+    layout(title = paste("Pressure:", depth, "mbar"),
+           xaxis = list(title = "Day of the year", range = c(1,365)),
+           yaxis = list(title = paste(ifelse(mean, "Mean", "Median"), "temperature (degrees celcius)"),
+                        range = ylim)) %>%
+    add_trace(y = ~Temp_clim_P10[paste(depth),yday_noNA], type = 'scatter', mode = "lines",
+              line = list(color = "transparent", name = "10th pc of climatology"),
+              fill = "tonexty", fillcolor = "rgba(255,0,0,0.4)", hoverinfo = "none") %>%
+    add_trace(y = ~Temp_clim_P10[paste(depth),], type = 'scatter', mode = "lines",
+              line = list(color = "transparent"), name = "10th pc of climatology")
+  if(mean){
     smoothTS <- rollmean(x = Temp_clim_mean[paste(depth),], k = as.numeric(smooth), fill = NA)
-    lines(smoothTS)
+    p <- p %>% add_trace(y = ~smoothTS, type = "scatter", mode = "lines",
+                             line = list(color = "black"), name = "Mean climatology")
   } else {
-      smoothTS <- rollmean(x = Temp_clim_med[paste(depth),], k = as.numeric(smooth), fill = NA)
-      lines(smoothTS)
+    smoothTS <- rollmean(x = Temp_clim_med[paste(depth),], k = as.numeric(smooth), fill = NA)
+    p <- p %>% add_trace(y = ~smoothTS, type = "scatter", mode = "lines",
+                         line = list(color = "black"), name = "Median climatology")
   }
+  return(p)
 }
 
 
@@ -287,7 +297,7 @@ ui <-
                               helpText("TOP: Temperature Climatology: mean or median of all temperature observations for a day of the year over all available years (black solid line). The pink shaded region represents the region enclosed by the 90th percentile and the 10th percentile of the termperature observations. Solid circles plotted over the climatology represent the daily averages for a specified year. Black, red and blue fills represent temperatures within the 90th and 10th percentiles, temperatures higher than the 90th percentile, and temperatures lower than the 10th percentiles respectively.
                                     BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years.")
                             ),
-                            mainPanel(plotOutput(outputId = "clim_plot"),
+                            mainPanel(plotlyOutput(outputId = "clim_plot"),
                                       plotOutput(outputId = "numObs_for_clim"))
                           )
                  ),
@@ -340,24 +350,43 @@ ui <-
 
 server <- function(input, output){
   
-  output$clim_plot <- renderPlot({
+  output$clim_plot <- renderPlotly({
     pressure = input$Pressure
     mean = input$Mean == "Mean"
     smooth = input$Smooth
-    plot_temp_ts(mean = mean, depth = pressure, smooth = smooth)
+    p <- plot_temp_ts(mean = mean, depth = pressure, smooth = smooth)
     year = input$Year
     fname <- list.files(path = basePath, 
                         pattern = glob2rx(paste0("*S",year,"*FV02_AVERAGE_TEMP*E",year,"*")))
-    # nc <- nc_open(filename = paste0(basePath,
-    #                                 fname))
-    # Temp_Avg <- ncvar_get(nc, varid = "TEMP_AVERAGE")
-    # nc_close(nc)
     Temp_Avg <- read_yearly_data(fname)
-    points(x = yearday, y = Temp_Avg[paste(pressure),], pch = 19)
     hotPts <- which(Temp_Avg[paste(pressure),] > Temp_clim_P90[paste(pressure),])
     coldPts <- which(Temp_Avg[paste(pressure),] < Temp_clim_P10[paste(pressure),])
-    points(x = hotPts, y = Temp_Avg[paste(pressure), hotPts], pch = 19, col = "red")
-    points(x = coldPts, y = Temp_Avg[paste(pressure), coldPts], pch = 19, col = "blue")
+    avgPts <- which(Temp_Avg[paste(pressure),] <= Temp_clim_P90[paste(pressure),] & Temp_Avg[paste(pressure),] >= Temp_clim_P10[paste(pressure),])
+    if (any(avgPts)) {
+      p <- p %>% add_trace(x = ~avgPts, y = ~Temp_Avg[paste(pressure),avgPts], type = "scatter", mode = "markers",
+                    name = paste(year, "yearly data"),
+                    marker = list(size = 12,
+                                  color = "rgba(0,0,0,0.4)",
+                                  line = list(color = "rgba(43,140,190,1)",
+                                              width = 2)))
+    }
+    if (any(hotPts)) {
+     p <- p %>% add_trace(x = ~hotPts, y = ~Temp_Avg[paste(pressure),hotPts], type = "scatter", mode = "markers",
+                name = paste(year, "yearly data"),
+                marker = list(size = 12,
+                              color = "rgba(255,0,0,1)",
+                              line = list(color = "rgba(43,140,190,1)",
+                                          width = 2)))
+    }
+    if (any(coldPts)) {
+      p <- p %>% add_trace(x = ~coldPts, y = ~Temp_Avg[paste(pressure),coldPts], type = "scatter", mode = "markers",
+                name = paste(year, "yearly data"),
+                marker = list(size = 12,
+                              color = "rgba(0,0,255,1)",
+                              line = list(color = "rgba(43,140,190,1)",
+                                          width = 2)))
+    }
+    p
   })
   
   output$numObs_for_clim <- renderPlot({
