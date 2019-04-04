@@ -303,7 +303,27 @@ ui <-
                           )
                  ),
                  tabItem("About",
-                         leafletOutput("stationMap_About", height = 800))
+                         verticalLayout(
+                           titlePanel("About"),
+                           p("The broad geographical reach of the East Australian Current (EAC) influences the climate and marine economies of nearly 
+                             half the Australian population, from Brisbane to Sydney, Melbourne, and Hobart. The poleward flowing EAC brings warm 
+                             water down the New South Wales (NSW) coast modulating the region’s climate as well as the composition, organisation and function 
+                             of marine ecosystems."),
+                           p("Since 2009, the 2000 km long coastline of New South Wales has been instrumented with a network of moored, remote sensing, and 
+                             in-situ observing platforms to monitor the EAC and its impact on waters of the highly populated east coast of Australia. This 
+                             network forms part of the larger national-level  Integrated Marine Observing System (IMOS - link to IMOS site.)"),
+                           p("NSW-IMOS have maintained a network of 8 shelf moorings at 3 latitudes (30°S, 34°S and 36°S) that measure temperature and 
+                             velocity every 5 mins at 8m depth  intervals throughout the water column. In addition  more than 40 autonomous glider missions 
+                             have been conducted along the east coast from 29°S to 34°S. Two high frequency coastal radar arrays measure surface velocities 
+                             over the core of the EAC and the EAC eddy field downstream of the separation point."),
+                           p("The key aims of NSW-IMOS are:"),
+                           tags$ul(tags$li("To contribute to national observations of decadal changes and climate variability of the EAC using common platforms and metrics."),
+                              tags$li("To investigate the EAC, its separation from the coast and the resultant eddy field along the coast of SE Australia."),
+                              tags$li("To quantify oceanographic processes on the continental shelf and slope off eastern Australia south of the Great Barrier Reef."),
+                              tags$li("To integrate the ecosystem response with oceanographic processes.")),
+                           leafletOutput("stationMap_About", height = 600))
+                         )
+                         
                )
              )
 )
