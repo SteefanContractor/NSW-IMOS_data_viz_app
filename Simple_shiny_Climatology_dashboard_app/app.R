@@ -249,6 +249,8 @@ ui <-
       ")),
                tabItems(
                  tabItem("Home",
+                         titlePanel("At a glance"),
+                         br(),
                          # fluidRow(
                          #   infoBox(title = "Port Hacking Mooring",subtitle = "Climatology Temperature Today", 22, icon = icon("fire"),
                          #           color = "yellow", fill = T),
@@ -259,7 +261,10 @@ ui <-
                          #   infoBox(title = "Sydney Moorings",subtitle = "Climatology Temperature Today", 16, icon = icon("fire"),
                          #           color = "blue", fill = T)
                          # ),
-                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600)))
+                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
+                         helpText(HTML("Colour of the labels indicate whether temperatures today are anomalous. A green label indicates the current temperatures are within the 10<sup>th</sup>",
+                                  "and 90<sup>th</sup> percentiles of the climatology, a red label indicates the current temperatures are greater than the 90<sup>th</sup> percentile, and",
+                                  "a blue label indicates the current temperatures are less than the 10<sup>th</sup> percentile."))
                  ),
                  tabItem("PH100_Clim",
                           sidebarLayout(
@@ -279,7 +284,8 @@ ui <-
                                           label = "Yearly data to be displayed over the climatology",
                                           min = 1954, max = 2018,
                                           value = 1954, animate = animationOptions(interval = 500)),
-                              textOutput(outputId = "Caption_tab1")
+                              helpText("TOP: Temperature Climatology: mean or median of all temperature observations for a day of the year over all available years (black solid line). The pink shaded region represents the region enclosed by the 90th percentile and the 10th percentile of the termperature observations. Solid circles plotted over the climatology represent the daily averages for a specified year. Black, red and blue fills represent temperatures within the 90th and 10th percentiles, temperatures higher than the 90th percentile, and temperatures lower than the 10th percentiles respectively.
+                                    BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years.")
                             ),
                             mainPanel(plotOutput(outputId = "clim_plot"),
                                       plotOutput(outputId = "numObs_for_clim"))
@@ -296,7 +302,8 @@ ui <-
                                           label = "Minimum number of consecutive days of anomalous temperatures that can be defined as a heatwave",
                                           min = 2, max = 5,
                                           value = 2),
-                              textOutput(outputId = "Caption_tab2")
+                              helpText("TOP: Number of marine temperature anomalies each year.
+                                    BOTTOM: The maximum possible number of heat/coldwaves of specified length that can be detected based on the number of missing values in the data. As an example, a value of 80 on the log scale represents 10^80 possibilities for a heat/coldwave.")
                             ),
                             mainPanel(plotOutput(outputId = "num_MCW"),
                                       plotOutput(outputId = "num_complete_runs"))
@@ -321,6 +328,8 @@ ui <-
                               tags$li("To investigate the EAC, its separation from the coast and the resultant eddy field along the coast of SE Australia."),
                               tags$li("To quantify oceanographic processes on the continental shelf and slope off eastern Australia south of the Great Barrier Reef."),
                               tags$li("To integrate the ecosystem response with oceanographic processes.")),
+                           h3("Moorings"),
+                           p("The following map shows the locations of all the moorings maintained by the NSW node of IMOS."),
                            leafletOutput("stationMap_About", height = 600))
                          )
                          
@@ -405,22 +414,22 @@ server <- function(input, output){
     
     leaflet() %>% addTiles() %>% addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
                                             label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "CH100") %>% select(site_code), paste(round(rTemps[1],1), "degrees"))),
-                                            labelOptions = labelOptions(noHide = T, direction = "bottom",
+                                            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
                                                                         style = list("background-color" = rBG[1]))) %>%
       addMarkers(data = stationLocs %>% filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
                  label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% select(site_code), paste(round(rTemps[2],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "right",
+                 labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
                                              style = list("background-color" = rBG[2]))) %>%
       addMarkers(data = stationLocs %>% filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
                  label = HTML(paste(sep = "<br/>", 
                                     a(paste(stationLocs %>% filter(site_code == "PH100") %>% select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
                                     paste(round(rTemps[3],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "bottom",
+                 labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
                                              style = list("background-color" = rBG[3],
                                                           "pointer-events" = "auto"))) %>%
       addMarkers(data = stationLocs %>% filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
                  label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "BMP120") %>% select(site_code), paste(round(rTemps[4],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "bottom",
+                 labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
                                              style = list("background-color" = rBG[4])))
   })
   
