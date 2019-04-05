@@ -398,8 +398,7 @@ server <- function(input, output){
     # Number of observations barplot using plotly for the climatology page
     text = paste("Number of yrs per day:", Temp_clim_nyrs[paste(pressure),])
     plot_ly(x=1:365,y=Temp_clim_nobs[paste(pressure),],type = "bar", name = "Total observations per day", text = text) %>%
-      layout(title = "Number of observations per day
-             used to create climatology",
+      layout(title = "Number of observations per day \nused to create climatology",
              paper_bgcolor = 'rgba(236,239,244,0)',
              plot_bgcolor = 'rgba(236,239,244,0)')
   })
