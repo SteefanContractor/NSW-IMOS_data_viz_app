@@ -318,8 +318,8 @@ ui <-
                               helpText("TOP: Number of marine temperature anomalies each year.
                                     BOTTOM: The maximum possible number of heat/coldwaves of specified length that can be detected based on the number of missing values in the data. As an example, a value of 80 on the log scale represents 10^80 possibilities for a heat/coldwave.")
                             ),
-                            mainPanel(plotOutput(outputId = "num_MCW"),
-                                      plotOutput(outputId = "num_complete_runs"))
+                            mainPanel(plotlyOutput(outputId = "num_MCW"),
+                                      plotlyOutput(outputId = "num_complete_runs"))
                           )
                  ),
                  tabItem("About",
@@ -404,29 +404,36 @@ server <- function(input, output){
              plot_bgcolor = 'rgba(236,239,244,0)')
   })
   
-  output$num_MCW <- renderPlot({
+  output$num_MCW <- renderPlotly({
     pressure = input$Pressure2
     runLen = input$MHWLen
-    data = rbind(get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]],
-                 get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]])
-    par(mar=c(5.1,5.1,4.1,2.1))
-    barplot(data, col = c("blue", "red"), beside = T,
-            xlab = "Years", ylab = "Number of heat/coldwave events")
-    legend('topleft',fill=c("blue", "red"),legend=c('Coldwaves','Heatwaves'))
+    plot_ly(x=years,y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], type = 'bar',
+            name = "Marine heatwave") %>%
+      add_trace(y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave") %>%
+      layout(xaxis = list(title = "Years"),
+             yaxis = list(title = "Number of events"),
+             barmode = "group",
+             legend = list(x = 0, y = 0.99),
+             paper_bgcolor = 'rgba(236,239,244,0)',
+             plot_bgcolor = 'rgba(236,239,244,0)')
+    
   })
   
-  output$num_complete_runs <- renderPlot({
+  output$num_complete_runs <- renderPlotly({
     pressure = input$Pressure2
     runLen = input$MHWLen
-    par(mar=c(5.1,5.1,4.1,2.1))
     totalPossibleRuns_TS = get(paste0("num.complete.runs.TS.RL", runLen))[[which(pressures == pressure)]]
     ylab = "Maximum possible number of heat/coldwaves\n based on data availability"
     if (max(totalPossibleRuns_TS) > 200) {
       totalPossibleRuns_TS = ifelse(totalPossibleRuns_TS == 0, 0, log(totalPossibleRuns_TS))
       ylab = paste(ylab, "(log scale)")
     }
-    barplot(totalPossibleRuns_TS,
-            xlab = "Years", ylab = ylab)
+    plot_ly(x=years,y=totalPossibleRuns_TS, name = paste("Total possible events of length", runLen),
+            type = 'bar') %>%
+      layout(xaxis = list(title = "Years"),
+             yaxis = list(title = ylab),
+             paper_bgcolor = 'rgba(236,239,244,0)',
+             plot_bgcolor = 'rgba(236,239,244,0)')
   })
   
   output$Caption_tab1 <- renderText("TOP: Temperature Climatology: mean or median of all temperature observations for a day of the year over all available years (black solid line). The pink shaded region represents the region enclosed by the 90th percentile and the 10th percentile of the termperature observations. Solid circles plotted over the climatology represent the daily averages for a specified year. Black, red and blue fills represent temperatures within the 90th and 10th percentiles, temperatures higher than the 90th percentile, and temperatures lower than the 10th percentiles respectively.
