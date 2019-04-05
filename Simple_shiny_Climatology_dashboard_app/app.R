@@ -298,7 +298,7 @@ ui <-
                                     BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years.")
                             ),
                             mainPanel(plotlyOutput(outputId = "clim_plot"),
-                                      plotOutput(outputId = "numObs_for_clim"))
+                                      plotlyOutput(outputId = "numObs_for_clim"))
                           )
                  ),
                  tabItem("PH100_MHW",
@@ -389,11 +389,14 @@ server <- function(input, output){
     p
   })
   
-  output$numObs_for_clim <- renderPlot({
+  output$numObs_for_clim <- renderPlotly({
     pressure = input$Pressure
     par(lwd = 0.5)
-    barplot(Temp_clim_nobs[paste(pressure),],
-         xlab = "Day of the year", ylab = "Number of observations used to create climatology")
+    # Number of observations barplot using plotly for the climatology page
+    text = paste("Number of yrs per day:", Temp_clim_nyrs[paste(pressure),])
+    plot_ly(x=1:365,y=Temp_clim_nobs[paste(pressure),],type = "bar", name = "Total observations per day", text = text) %>%
+      layout(title = "Number of observations per day
+             used to create climatology")
   })
   
   output$num_MCW <- renderPlot({
