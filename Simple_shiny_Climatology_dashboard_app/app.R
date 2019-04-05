@@ -11,13 +11,13 @@ library(plotly)
 local = system("uname -n", intern = T) == "matht250"#T
 
 if (local) {
-  basePath <- "~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
+  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
               #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
 } else {
   basePath <- "./data/"
 }
 
-nc <- nc_open(filename = paste0(basePath,"IMOS_ANMN-NSW_TZ_S19535120000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20187120000Z_C20190214123834Z.nc"))
+nc <- nc_open(filename = paste0(basePath,"IMOS_NSW_TZ_S19530531040000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20181206212730Z_C20190327132838Z.nc"))
 Temp_clim_mean <- ncvar_get(nc, varid = "TEMP_AVE")
 Temp_clim_med <- ncvar_get(nc, varid = "TEMP_MED")
 Temp_clim_std <- ncvar_get(nc, varid = "TEMP_STD")
@@ -46,7 +46,7 @@ get_fnames <- function(years) {
   # function to fetch file names with a particular year given a list of years
   fnames <- c()
   for (y in years) {
-    fname <- list.files(path = basePath, 
+    fname <- list.files(path = paste0(basePath, "phyearlyfilesdata/"), 
                         pattern = glob2rx(paste0("*S",y,"*FV02_AVERAGE_TEMP*E",y,"*")))
     fnames <- append(fnames, fname)
   }
@@ -56,9 +56,9 @@ get_fnames <- function(years) {
 read_yearly_data <- function(fname) {
   # function to read yearly data give a vector of nc file names
   if(fname == "") stop("No file name provided")
-  nc <- nc_open(filename = paste0(basePath,
+  nc <- nc_open(filename = paste0(basePath, "phyearlyfilesdata/",
                                   fname))
-  Temp_Avg <- ncvar_get(nc, varid = "TEMP_AVE")
+  Temp_Avg <- ncvar_get(nc, varid = "TEMP_AVERAGE")
   nc_close(nc)
   dimnames(Temp_Avg) <- list(paste(pressures), paste(yearday))
   return(Temp_Avg)
@@ -356,7 +356,7 @@ server <- function(input, output){
     smooth = input$Smooth
     p <- plot_temp_ts(mean = mean, depth = pressure, smooth = smooth)
     year = input$Year
-    fname <- list.files(path = basePath, 
+    fname <- list.files(path = paste0(basePath, "phyearlyfilesdata/"), 
                         pattern = glob2rx(paste0("*S",year,"*FV02_AVERAGE_TEMP*E",year,"*")))
     Temp_Avg <- read_yearly_data(fname)
     hotPts <- which(Temp_Avg[paste(pressure),] > Temp_clim_P90[paste(pressure),])
