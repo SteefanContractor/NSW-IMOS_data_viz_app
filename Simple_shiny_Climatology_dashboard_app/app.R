@@ -17,7 +17,7 @@ if (local) {
   basePath <- "./data/"
 }
 
-nc <- nc_open(filename = paste0(basePath,"IMOS_NSW_TZ_S19530531040000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20181206212730Z_C20190327132838Z.nc"))
+nc <- nc_open(filename = paste0(basePath,"IMOS_NSW_TZ_S19530531040000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20181206212730Z_C20190405161810Z.nc"))
 Temp_clim_mean <- ncvar_get(nc, varid = "TEMP_AVE")
 Temp_clim_med <- ncvar_get(nc, varid = "TEMP_MED")
 Temp_clim_std <- ncvar_get(nc, varid = "TEMP_STD")
@@ -324,26 +324,33 @@ ui <-
                  ),
                  tabItem("About",
                          verticalLayout(
-                           titlePanel("About"),
-                           p("The broad geographical reach of the East Australian Current (EAC) influences the climate and marine economies of nearly 
-                             half the Australian population, from Brisbane to Sydney, Melbourne, and Hobart. The poleward flowing EAC brings warm 
-                             water down the New South Wales (NSW) coast modulating the region’s climate as well as the composition, organisation and function 
+                           tags$head(HTML('<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true"></script>
+                                          <script type="text/javascript" src="imos_map.js"></script>')),
+                           tags$body(onload="initialize()",
+                                     titlePanel("About"),
+                                     p("The broad geographical reach of the East Australian Current (EAC) influences the climate and marine economies of nearly
+                             half the Australian population, from Brisbane to Sydney, Melbourne, and Hobart. The poleward flowing EAC brings warm
+                             water down the New South Wales (NSW) coast modulating the region’s climate as well as the composition, organisation and function
                              of marine ecosystems."),
-                           p("Since 2009, the 2000 km long coastline of New South Wales has been instrumented with a network of moored, remote sensing, and 
-                             in-situ observing platforms to monitor the EAC and its impact on waters of the highly populated east coast of Australia. This 
+                                     p("Since 2009, the 2000 km long coastline of New South Wales has been instrumented with a network of moored, remote sensing, and
+                             in-situ observing platforms to monitor the EAC and its impact on waters of the highly populated east coast of Australia. This
                              network forms part of the larger national-level  Integrated Marine Observing System (IMOS - link to IMOS site.)"),
-                           p("NSW-IMOS have maintained a network of 8 shelf moorings at 3 latitudes (30°S, 34°S and 36°S) that measure temperature and 
-                             velocity every 5 mins at 8m depth  intervals throughout the water column. In addition  more than 40 autonomous glider missions 
-                             have been conducted along the east coast from 29°S to 34°S. Two high frequency coastal radar arrays measure surface velocities 
+                                     p("NSW-IMOS have maintained a network of 8 shelf moorings at 3 latitudes (30°S, 34°S and 36°S) that measure temperature and
+                             velocity every 5 mins at 8m depth  intervals throughout the water column. In addition  more than 40 autonomous glider missions
+                             have been conducted along the east coast from 29°S to 34°S. Two high frequency coastal radar arrays measure surface velocities
                              over the core of the EAC and the EAC eddy field downstream of the separation point."),
-                           p("The key aims of NSW-IMOS are:"),
-                           tags$ul(tags$li("To contribute to national observations of decadal changes and climate variability of the EAC using common platforms and metrics."),
-                              tags$li("To investigate the EAC, its separation from the coast and the resultant eddy field along the coast of SE Australia."),
-                              tags$li("To quantify oceanographic processes on the continental shelf and slope off eastern Australia south of the Great Barrier Reef."),
-                              tags$li("To integrate the ecosystem response with oceanographic processes.")),
-                           h3("Moorings"),
-                           p("The following map shows the locations of all the moorings maintained by the NSW node of IMOS."),
-                           leafletOutput("stationMap_About", height = 600))
+                                     p("The key aims of NSW-IMOS are:"),
+                                     tags$ul(tags$li("To contribute to national observations of decadal changes and climate variability of the EAC using common platforms and metrics."),
+                                             tags$li("To investigate the EAC, its separation from the coast and the resultant eddy field along the coast of SE Australia."),
+                                             tags$li("To quantify oceanographic processes on the continental shelf and slope off eastern Australia south of the Great Barrier Reef."),
+                                             tags$li("To integrate the ecosystem response with oceanographic processes.")),
+                                     h3("Moorings"),
+                                     p("The following map shows the locations of all the moorings maintained by the NSW node of IMOS."),
+                                     # leafletOutput("stationMap_About", height = 600),
+                           HTML('<div id="map_canvas" style="margin-left:30px;width:90%; height:600px;">'))
+                         )
+                           
+                           # htmlOutput("test")
                          )
                          
                )
