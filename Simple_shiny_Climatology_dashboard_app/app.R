@@ -208,7 +208,9 @@ plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
     layout(title = paste("Pressure:", depth, "mbar"),
            xaxis = list(title = "Day of the year", range = c(1,365)),
            yaxis = list(title = paste(ifelse(mean, "Mean", "Median"), "temperature (degrees celcius)"),
-                        range = ylim)) %>%
+                        range = ylim),
+           paper_bgcolor = 'rgba(236,239,244,0)',
+           plot_bgcolor = 'rgba(236,239,244,0)') %>%
     add_trace(y = ~Temp_clim_P10[paste(depth),yday_noNA], type = 'scatter', mode = "lines",
               line = list(color = "transparent", name = "10th pc of climatology"),
               fill = "tonexty", fillcolor = "rgba(255,0,0,0.4)", hoverinfo = "none") %>%
@@ -298,6 +300,7 @@ ui <-
                                     BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years.")
                             ),
                             mainPanel(plotlyOutput(outputId = "clim_plot"),
+                                      br(),
                                       plotlyOutput(outputId = "numObs_for_clim"))
                           )
                  ),
@@ -396,7 +399,9 @@ server <- function(input, output){
     text = paste("Number of yrs per day:", Temp_clim_nyrs[paste(pressure),])
     plot_ly(x=1:365,y=Temp_clim_nobs[paste(pressure),],type = "bar", name = "Total observations per day", text = text) %>%
       layout(title = "Number of observations per day
-             used to create climatology")
+             used to create climatology",
+             paper_bgcolor = 'rgba(236,239,244,0)',
+             plot_bgcolor = 'rgba(236,239,244,0)')
   })
   
   output$num_MCW <- renderPlot({
