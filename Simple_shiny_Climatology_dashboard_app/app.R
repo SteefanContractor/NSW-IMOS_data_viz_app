@@ -324,8 +324,9 @@ ui <-
                  ),
                  tabItem("About",
                          verticalLayout(
-                           tags$head(HTML('<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true"></script>
+                           tags$head(HTML('<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true&callback=initMap"></script>
                                           <script type="text/javascript" src="imos_map.js"></script>')),
+                           #<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true"></script>,
                            tags$body(onload="initialize()",
                                      titlePanel("About"),
                                      p("The broad geographical reach of the East Australian Current (EAC) influences the climate and marine economies of nearly
@@ -413,9 +414,8 @@ server <- function(input, output){
   output$num_MCW <- renderPlotly({
     pressure = input$Pressure2
     runLen = input$MHWLen
-    plot_ly(x=years,y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], type = 'bar',
-            name = "Marine heatwave") %>%
-      add_trace(y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave") %>%
+    plot_ly(x=years,y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave", type = 'bar') %>%
+      add_trace(y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine heatwave") %>%
       layout(xaxis = list(title = "Years"),
              yaxis = list(title = "Number of events"),
              barmode = "group",
