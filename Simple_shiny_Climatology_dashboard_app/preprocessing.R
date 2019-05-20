@@ -1,63 +1,164 @@
-# A script for pre processing data for the NSW-IMOS data viz app
-
-# Exploratory script for climatologies
+# Script to do data preprocessing for climatology app
+# Author: Steefan Contractor
 
 library(ncdf4)
 library(zoo)
 library(lubridate)
 library(readODS)
-library(maps)
+library(tidyverse)
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "matht250"#T
 
 if (local) {
-  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
-              #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
+  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
+  #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
 } else {
-  basePath <- "./"
+  basePath <- "./data/"
 }
 
-setwd(basePath)
-
-filename <- "A.P1D.20190304T000000Z.aust.sst.NSW.nc"
-nc <- nc_open(paste0("./data/", filename))
-sst_latest <- ncvar_get(nc, varid = "sst")
-sst_latest <- sst_latest[,dim(sst_latest)[2]:1]
-lon <- ncvar_get(nc, varid = "longitude")
-lat <- rev(ncvar_get(nc, varid = "latitude"))
+nc <- nc_open(filename = paste0(basePath,"IMOS_NSW_TZ_S19530531040000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20181206212730Z_C20190405161810Z.nc"))
+Temp_clim_mean <- ncvar_get(nc, varid = "TEMP_AVE")
+Temp_clim_med <- ncvar_get(nc, varid = "TEMP_MED")
+Temp_clim_std <- ncvar_get(nc, varid = "TEMP_STD")
+Temp_clim_P90 <- ncvar_get(nc, varid = "TEMP_PER90")
+Temp_clim_P10 <- ncvar_get(nc, varid = "TEMP_PER10")
+Temp_clim_nobs <- ncvar_get(nc, varid = "NOBS")
+Temp_clim_nyrs <- ncvar_get(nc, varid = "NYRS")
+pressures <- ncvar_get(nc, varid = "PRES")
+time <- ncvar_get(nc, varid = "TIME")
 nc_close(nc)
 
-image(lon, lat, sst_latest)
-map("world", "Australia", add = T)
+dates <- ymd("19500101") + time
+yearday <- yday(dates)
 
-# read in exact coordinates for the moorings
-stationLocs <- read_ods("./data/NSW-IMOS_assets_2018-10-30.ods")
-colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
+dimnames(Temp_clim_mean) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_med) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_std) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_P90) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_P10) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_nobs) <- list(paste(pressures), paste(yearday))
+dimnames(Temp_clim_nyrs) <- list(paste(pressures), paste(yearday))
 
-library(tidyverse)
-
-stationLocs <- stationLocs %>% mutate(grid_lat_index = sapply(avg_lat, FUN = function(x) {which.min(abs(x - lat))}),
-                                      grid_lon_index = sapply(avg_lon, FUN = function(x) {which.min(abs(x - lon))})) 
-
-avgBox <- function(dataArray, indexLon, indexLat, numUnits, maxLon = length(lon), maxLat = length(lat)) {
-  # function to average values over a square region around a given index of a 2D array
-  # dataArray: 2D array being averaged
-  # indexLon: first index of location specifying center of square
-  # indexLat: second index of location specifying center of square
-  # numUnits: Distance (units) of square boundary from the center (half of the side length)
-  firstLon = max(indexLon - numUnits, 1)
-  lastLon = min(indexLon + numUnits, maxLon)
-  firstLat = max(indexLat - numUnits, 1)
-  lastLat = min(indexLat + numUnits, maxLat)
-  return(mean(dataArray[firstLon:lastLon, firstLat:lastLat], na.rm = T))
+########################
+# load yearly data
+get_fnames <- function(years) {
+  # function to fetch file names with a particular year given a list of years
+  fnames <- c()
+  for (y in years) {
+    fname <- list.files(path = paste0(basePath, "phyearlyfilesdata/"), 
+                        pattern = glob2rx(paste0("*S",y,"*FV02_AVERAGE_TEMP*E",y,"*")))
+    fnames <- append(fnames, fname)
+  }
+  return(fnames)
 }
 
-stationLocs <- stationLocs %>% mutate(avgSST = sapply(1:10, FUN = function(n) {
-  avgBox(sst_latest, grid_lon_index[n], grid_lat_index[n], numUnits = 8)})
-)
+read_yearly_data <- function(fname) {
+  # function to read yearly data give a vector of nc file names
+  if(fname == "") stop("No file name provided")
+  nc <- nc_open(filename = paste0(basePath, "phyearlyfilesdata/",
+                                  fname))
+  Temp_Avg <- ncvar_get(nc, varid = "TEMP_AVERAGE")
+  nc_close(nc)
+  dimnames(Temp_Avg) <- list(paste(pressures), paste(yearday))
+  return(Temp_Avg)
+}
 
-# Get date from file name
-date <- unlist(strsplit(unlist(strsplit(filename, "[.]"))[3], "[T]"))[1]
+is.anomalous <- function(temp_ts, Temp_clim_P90_ts, Temp_clim_P10_ts) {
+  # function that checks yearly_data to see if temperatures are outside the 90th and 10th pc
+  temp_ts > Temp_clim_P90_ts | temp_ts < Temp_clim_P10_ts
+}
 
-save(stationLocs, file = paste0("./data/avgSST_",date,".RData"))
+is.hot.anomaly <- function(temp_ts, Temp_clim_P90_ts) {
+  # function that checks yearly_data to see if temperatures are outside the 90th and 10th pc
+  temp_ts > Temp_clim_P90_ts
+}
+
+is.cold.anomaly <- function(temp_ts, Temp_clim_P10_ts) {
+  # function that checks yearly_data to see if temperatures are outside the 90th and 10th pc
+  temp_ts < Temp_clim_P10_ts
+}
+
+num.True.runLen <- function(boolTS, runLen = 2) {
+  length(which(rle(boolTS)$lengths[which(rle(boolTS)$values == 1)] >= runLen))
+}
+
+num.complete.runs <- function(TS, runLen = 2) {
+  boolTS <- !is.na(TS)
+  num.True.runLen(boolTS = boolTS, runLen = runLen)
+}
+
+possibleRuns <- function(n, runLen = 2) {
+  if(n < runLen){
+    return(0)
+  } else if (n == runLen) {
+    return(1)
+  } else {
+    return(2*possibleRuns(n-1, runLen = runLen)+1)
+  }
+}
+
+totalPossibleRuns <- function(TS, runLen = 2) {
+  boolTS <- !is.na(TS)
+  runs <- rle(boolTS)$length[which(rle(boolTS)$values == T)]
+  sum(unlist(sapply(runs, FUN = possibleRuns, runLen = runLen)))
+}
+
+
+create.num.True.runLen.TS <- function(yearly_data, hotAnomaly = T, depth = pressures[1], runLen = 2) {
+  sapply(lapply(yearly_data, FUN = function(x) {
+    if (hotAnomaly) {
+      is.hot.anomaly(temp_ts = x[paste(depth),], 
+                     Temp_clim_P90_ts = Temp_clim_P90[paste(depth), ])
+    } else {
+      is.cold.anomaly(temp_ts = x[paste(depth),], 
+                      Temp_clim_P10_ts = Temp_clim_P10[paste(depth), ])
+    }
+  }), FUN = num.True.runLen, runLen = runLen)
+}
+
+create.num.complete.runs.TS <- function(yearly_data, depth = pressures[1], runLen = 2) {
+  #sapply(l
+  sapply(yearly_data, FUN = function(x, RL) {
+    totalPossibleRuns(x[paste(depth),], runLen = RL)#, 
+    # Temp_clim_P90_ts = Temp_clim_P90[paste(depth), ], 
+    # Temp_clim_P10_ts = Temp_clim_P10[paste(depth), ])
+  }, RL = runLen)#, FUN = num.complete.runs, runLen = runLen)
+}
+
+years <- seq(1954,2018)
+fnames <- get_fnames(years)
+yearly_data <- lapply(fnames, FUN = read_yearly_data)
+years <- as.numeric(substring(fnames, regexpr("*TZ_S", fnames) + 4, regexpr("*TZ_S", fnames) + 7))
+names(yearly_data) <- years
+
+# bool <- is.anomalous(yearly_data$`2015`[,1], 
+#                      Temp_Clim_P90_ts = Temp_Clim_P90_grid[1,], 
+#                      Temp_Clim_P10_ts = Temp_Clim_P10_grid[1,])
+
+# Heatwaves
+# runLen = 2
+num.heatwaves.RL2 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, runLen = 2, hotAnomaly = T)
+num.complete.runs.TS.RL2 <- lapply(pressures, FUN = create.num.complete.runs.TS, yearly_data = yearly_data, runLen = 2)
+# runLen = 3
+num.heatwaves.RL3 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = T, runLen = 3)
+num.complete.runs.TS.RL3 <- lapply(pressures, FUN = create.num.complete.runs.TS, yearly_data = yearly_data, runLen = 3)
+# runLen = 4
+num.heatwaves.RL4 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = T, runLen = 4)
+num.complete.runs.TS.RL4 <- lapply(pressures, FUN = create.num.complete.runs.TS, yearly_data = yearly_data, runLen = 4)
+# runLen = 5
+num.heatwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = T, runLen = 5)
+num.complete.runs.TS.RL5 <- lapply(pressures, FUN = create.num.complete.runs.TS, yearly_data = yearly_data, runLen = 5)
+
+# Coldwaves
+# runLen = 2
+num.coldwaves.RL2 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = F, runLen = 2)
+# runLen = 3
+num.coldwaves.RL3 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = F, runLen = 3)
+# runLen = 4
+num.coldwaves.RL4 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = F, runLen = 4)
+# runLen = 5
+num.coldwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = F, runLen = 5)
+
+rm(nc); gc()
+save.image(file = paste0(basePath,"prerundata_20052019.RData"))
