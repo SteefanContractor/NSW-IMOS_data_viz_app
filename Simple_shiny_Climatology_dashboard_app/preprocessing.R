@@ -160,5 +160,7 @@ num.coldwaves.RL4 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_d
 # runLen = 5
 num.coldwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_data = yearly_data, hotAnomaly = F, runLen = 5)
 
+stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
+
 rm(nc); gc()
-save.image(file = paste0(basePath,"prerundata_20052019.RData"))
+save.image(file = paste0(basePath,"prerundata_21052019.RData"))

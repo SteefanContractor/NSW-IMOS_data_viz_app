@@ -2,6 +2,8 @@
 
 library(tidyverse)
 library(plotly)
+library(lubridate)
+library(zoo) 
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "matht250"#T
@@ -13,7 +15,7 @@ if (local) {
   basePath <- "./data/"
 }
 
-load(paste0(basePath, "prerundata_20052019.RData"))
+load(paste0(basePath, "prerundata_21052019.RData"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
@@ -186,9 +188,7 @@ server <- function(input, output){
     smooth = input$Smooth
     p <- plot_temp_ts(mean = mean, depth = pressure, smooth = smooth)
     year = input$Year
-    fname <- list.files(path = paste0(basePath, "phyearlyfilesdata/"), 
-                        pattern = glob2rx(paste0("*S",year,"*FV02_AVERAGE_TEMP*E",year,"*")))
-    Temp_Avg <- read_yearly_data(fname)
+    Temp_Avg <- yearly_data[[paste(year)]]
     hotPts <- which(Temp_Avg[paste(pressure),] > Temp_clim_P90[paste(pressure),])
     coldPts <- which(Temp_Avg[paste(pressure),] < Temp_clim_P10[paste(pressure),])
     avgPts <- which(Temp_Avg[paste(pressure),] <= Temp_clim_P90[paste(pressure),] & Temp_Avg[paste(pressure),] >= Temp_clim_P10[paste(pressure),])
@@ -268,7 +268,6 @@ server <- function(input, output){
                                     BOTTOM: The maximum possible number of heat/coldwaves of specified length that can be detected based on the number of missing values in the data. As an example, a value of 80 on the log scale represents 10^80 possibilities for a heat/coldwave.")
   
   output$stationMap_Home <- renderLeaflet({
-    stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
     colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
     stationLocs <- stationLocs %>% slice(c(3,6,8,9))
     
