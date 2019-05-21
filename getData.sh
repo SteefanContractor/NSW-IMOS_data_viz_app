@@ -2,6 +2,8 @@
 
 if [ ! -d data ]; then mkdir data; fi
 cd data/
+# a file to distinguish old from new files
+touch lastwatch
 
 # delete old files
 if [ -f months.txt ]; then rm months.txt; fi
@@ -35,12 +37,18 @@ fi
 # Remove old files or nc files not in fnames.txt
 rm `ls *.nc | grep -v -f fnames.txt`
 
-# Use CDO to subset to the region of interest
-for f in `cat fnames.txt`; do
-	fname="${f%.*}"
-	cdo sellonlatbox,150,158,-30,-36 "$f" "$fname"_Aus-NSW.nc
-	cdo copy "$fname"_Aus-NSW.nc "$f"
-	rm "$fname"_Aus-NSW.nc
-done
+# file with list of new nc files
+find -cnewer lastwatch -name "*.nc" -exec basename {} \; > newfiles.txt
 
+# Use CDO to subset to the region of interest
+if [ -s newfiles.txt ]; then 
+	for f in `cat newfiles.txt`; do
+		fname="${f%.*}"
+		cdo sellonlatbox,150,158,-30,-36 "$f" "$fname"_Aus-NSW.nc
+		cdo copy "$fname"_Aus-NSW.nc "$f"
+		rm "$fname"_Aus-NSW.nc
+	done
+fi
+
+rm lastwatch
 cd ..
