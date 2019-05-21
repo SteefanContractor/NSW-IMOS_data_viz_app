@@ -28,6 +28,12 @@ COPY getData.sh /home/ubuntu
 # make getData.sh executable
 RUN sudo chmod +x /home/ubuntu/getData.sh
 
+# make a data directory for downloaded realtime SST data
+RUN mkdir /home/ubuntu/data
+
+# Copy git repo data dir into the data dir on container
+COPY data /home/ubuntu/data
+
 # Copy hello-cron file to the cron.d directory
 COPY cron-job /etc/cron.d/cron-job
 
