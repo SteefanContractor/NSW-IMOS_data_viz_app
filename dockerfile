@@ -49,8 +49,11 @@ RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','
 # Copy the shiny app to /srv/shiny-server/
 COPY Simple_shiny_Climatology_dashboard_app /srv/shiny-server/
 
+# Give R read/write permissions in directory
+RUN sudo chown -R shiny:shiny /srv/shiny-server
+
 # Run the command on container startup
-CMD sudo cron && /usr/bin/shiny-server.sh 
+CMD sudo cron && sudo /usr/bin/shiny-server.sh 
 
 #ENTRYPOINT ["/usr/bin/shiny-server.sh"]
 
