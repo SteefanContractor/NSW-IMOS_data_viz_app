@@ -285,36 +285,41 @@ server <- function(input, output){
     # determine colourmapping for sst raster image
     pal <- colorNumeric(
       palette = "magma",
-      domain = values(sst))
+      domain = values(sst),
+      na.color = "#00000000")
     
-    leaflet() %>% addTiles() %>% addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
-                                            label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
-                                            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-                                                                        style = list("background-color" = rBG[1])),
-                                            group = "Moorings") %>%
-      addMarkers(data = stationLocs %>% dplyr::filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
-                 label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% dplyr::select(site_code), paste(round(rTemps[2],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
-                                             style = list("background-color" = rBG[2])),
-                 group = "Moorings") %>%
-      addMarkers(data = stationLocs %>% dplyr::filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
-                 label = HTML(paste(sep = "<br/>", 
-                                    a(paste(stationLocs %>% dplyr::filter(site_code == "PH100") %>% dplyr::select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
-                                    paste(round(rTemps[3],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-                                             style = list("background-color" = rBG[3],
-                                                          "pointer-events" = "auto")),
-                 group = "Moorings") %>%
-      addMarkers(data = stationLocs %>% dplyr::filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
-                 label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "BMP120") %>% dplyr::select(site_code), paste(round(rTemps[4],1), "degrees"))),
-                 labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-                                             style = list("background-color" = rBG[4])),
-                 group = "Moorings") %>%
-      addRasterImage(sst, colors = pal, group = "SST") %>% addLegend(pal = pal, values = values(sst),
-                                                      title = "Surface temp", group = "SST")
+    m <- leaflet() %>% addTiles() 
+    
+    m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>% 
+      addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
+                title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
+      # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
+      #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
+      #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+      #                                                                   style = list("background-color" = rBG[1])),
+      #                                       group = "Moorings") %>%
+      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
+      #            label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% dplyr::select(site_code), paste(round(rTemps[2],1), "degrees"))),
+      #            labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
+      #                                        style = list("background-color" = rBG[2])),
+      #            group = "Moorings") %>%
+      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
+      #            label = HTML(paste(sep = "<br/>", 
+      #                               a(paste(stationLocs %>% dplyr::filter(site_code == "PH100") %>% dplyr::select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
+      #                               paste(round(rTemps[3],1), "degrees"))),
+      #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+      #                                        style = list("background-color" = rBG[3],
+      #                                                     "pointer-events" = "auto")),
+      #            group = "Moorings") %>%
+      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
+      #            label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "BMP120") %>% dplyr::select(site_code), paste(round(rTemps[4],1), "degrees"))),
+      #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+      #                                        style = list("background-color" = rBG[4])),
+      #            group = "Moorings") %>%
+      # 
       # Layers control
       addLayersControl(
-        overlayGroups = c("Moorings"),
+        overlayGroups = c("SST"),
         options = layersControlOptions(collapsed = FALSE),
         position = "topleft"
       )
