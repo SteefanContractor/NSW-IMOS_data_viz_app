@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ ! -d data ]; then mkdir data; fi
-cd data/
+if [ ! -d data/SST ]; then mkdir data/SST; fi
+cd data/SST
 # a file to distinguish old from new files
 touch lastwatch
 
@@ -44,11 +44,11 @@ find -cnewer lastwatch -name "*.nc" -exec basename {} \; > newfiles.txt
 if [ -s newfiles.txt ]; then 
 	for f in `cat newfiles.txt`; do
 		fname="${f%.*}"
-		cdo sellonlatbox,150,158,-30,-36 "$f" "$fname"_Aus-NSW.nc
+		cdo sellonlatbox,149.5,160,-28,-37.5 "$f" "$fname"_Aus-NSW.nc
 		cdo copy "$fname"_Aus-NSW.nc "$f"
 		rm "$fname"_Aus-NSW.nc
 	done
 fi
 
 rm lastwatch
-cd ..
+cd ../..
