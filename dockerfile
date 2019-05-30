@@ -50,7 +50,7 @@ RUN sudo crontab /etc/cron.d/cron-job
 RUN sudo apt-get install -y libnetcdf-dev libudunits2-dev
 
 # install R packages
-RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet'))"
+RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet','raster'))"
 
 # Copy the shiny app to /srv/shiny-server/
 COPY Simple_shiny_Climatology_dashboard_app /srv/shiny-server/
