@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
 	sudo \
 	systemd \
 	cron \
-	vim 
+	vim \
+	cdo
 
 # create a root user ubuntu
 RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 ubuntu
@@ -22,17 +23,28 @@ RUN echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 USER ubuntu
 WORKDIR /home/ubuntu
 
+# Copy git repo data dir into the data dir on container
+COPY Simple_shiny_Climatology_dashboard_app/data /srv/shiny-server/data
+
 # copy getData.sh script to home dir
-COPY getData.sh /home/ubuntu 
+COPY getData.sh /srv/shiny-server/
 
 # make getData.sh executable
-RUN sudo chmod +x /home/ubuntu/getData.sh
+RUN sudo chmod +x /srv/shiny-server/getData.sh
 
 # make a data directory for downloaded realtime SST data
-RUN mkdir /home/ubuntu/data
+#RUN mkdir /home/ubuntu/data
 
-# Copy git repo data dir into the data dir on container
-COPY data /home/ubuntu/data
+# run getData.sh in /srv/shiny-server
+RUN sudo /srv/shiny-server/getData.sh
+
+# copy preprocessing scripts
+COPY Simple_shiny_Climatology_dashboard_app/preprocessing.R /srv/shiny-server/
+COPY Simple_shiny_Climatology_dashboard_app/processRealtimeSSTdata.R /srv/shiny-server/
+
+# run the preprocessing scripts 
+RUN sudo Rscript /srv/shiny-server/preprocessing.R
+RUN sudo Rscript /srv/shiny-server/processRealtimeSSTdata.R
 
 # Copy hello-cron file to the cron.d directory
 COPY cron-job /etc/cron.d/cron-job
