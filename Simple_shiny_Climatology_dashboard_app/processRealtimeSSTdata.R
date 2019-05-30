@@ -3,7 +3,6 @@
 
 library(ncdf4)
 library(lubridate)
-library(maps)
 library(dplyr)
 library(raster) #
 
