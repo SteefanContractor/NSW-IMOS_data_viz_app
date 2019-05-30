@@ -20,7 +20,7 @@ wget -q -O - http://opendap.bom.gov.au:8080/thredds/catalog/abom_imos_ghrsst_arc
 
 # Download files in fnames.txt
 for f in `cat fnames.txt`; do
-	wget -nc -A.nc http://opendap.bom.gov.au:8080/thredds/fileServer/abom_imos_ghrsst_archive-1/v02.0fv03/Continental/L3C-01hour/ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$thismon"/"$f"
+	wget -q -nc -A.nc http://opendap.bom.gov.au:8080/thredds/fileServer/abom_imos_ghrsst_archive-1/v02.0fv03/Continental/L3C-01hour/ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$thismon"/"$f"
 done
 
 # If there aren't 48 files in the current month then get the remaining files from last month
@@ -29,7 +29,7 @@ if [ $totfiles -lt 48 ]; then
 	remainfiles=$(( 48 - $totfiles ))		
 	wget -q -O - http://opendap.bom.gov.au:8080/thredds/catalog/abom_imos_ghrsst_archive-1/v02.0fv03/Continental/L3C-01hour/ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$lastmon"/catalog.html | grep -oP  "(?<=ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$lastmon"/).*.nc(?='><tt>)" | tail -n "$remainfiles" > fnames_lastmon.txt
 	for f in `cat fnames_lastmon.txt`; do
-        	wget -nc -A.nc http://opendap.bom.gov.au:8080/thredds/fileServer/abom_imos_ghrsst_archive-1/v02.0fv03/Continental/L3C-01hour/ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$lastmon"/"$f"
+        	wget -q -nc -A.nc http://opendap.bom.gov.au:8080/thredds/fileServer/abom_imos_ghrsst_archive-1/v02.0fv03/Continental/L3C-01hour/ABOM-L3C_GHRSST-SSTskin-AxIH08/2019/"$lastmon"/"$f"
 	done
 	cat fnames_lastmon.txt >> fnames.txt
 fi
