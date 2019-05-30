@@ -6,8 +6,15 @@ library(lubridate)
 library(zoo) 
 library(raster) #
 
-# working directory is the data/ dir where relative to script loc
-basePath <- "./data/"
+# change local to True when developing locally
+local = system("uname -n", intern = T) == "matht250"#T
+
+if (local) {
+  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
+  #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
+} else {
+  basePath <- "/srv/shiny-server/data/"
+}
 
 prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RData")), decreasing = T)[1]
 load(paste0(basePath, prerundata.file))
