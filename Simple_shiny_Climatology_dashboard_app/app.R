@@ -6,18 +6,12 @@ library(lubridate)
 library(zoo) 
 library(raster) #
 
-# change local to True when developing locally
-local = system("uname -n", intern = T) == "matht250"#T
+# working directory is the data/ dir where relative to script loc
+basePath <- "./data/"
 
-if (local) {
-  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
-              #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
-} else {
-  basePath <- "./data/"
-}
-
-load(paste0(basePath, "prerundata_21052019.RData"))
-load(paste0(basePath, "latestSST.Rdata"))
+prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RData")), decreasing = T)[1]
+load(paste0(basePath, prerundata.file))
+load(paste0(basePath, "SST/latestSST.Rdata"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
