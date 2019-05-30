@@ -7,23 +7,16 @@ library(maps)
 library(dplyr)
 library(raster) #
 
-# change local to True when developing locally
-local = system("uname -n", intern = T) == "matht250"#T
+# working directory is where the script is
+basePath <- "./"
 
-if (local) {
-  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
-  #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
-} else {
-  basePath <- "./"
-}
-
-files <- list.files(paste0(basePath,"data/"), pattern = glob2rx("*.nc"))
+files <- list.files(paste0(basePath,"data/SST/"), pattern = glob2rx("*.nc"))
 date_times <- ymd_hms(substr(files, 1,14))
 df <- data.frame(date_time = date_times, filename = files)
 df <- arrange(df, desc(date_time))
 
 # read in first nc
-nc <- nc_open(paste0(basePath,"data/",df$filename[1]))
+nc <- nc_open(paste0(basePath,"data/SST/",df$filename[1]))
 lon <- ncvar_get(nc, "lon")
 lat <- rev(ncvar_get(nc, "lat"))
 qflag <- ncvar_get(nc, "quality_level")
@@ -34,7 +27,7 @@ nc_close(nc)
 # Now systematically go through previous sst fields and fill in gaps
 for (t in 6:48){
   # t = 5
-  nc <- nc_open(paste0(basePath,"data/",df$filename[t]))
+  nc <- nc_open(paste0(basePath,"data/SST/",df$filename[t]))
   qflag_prev <- ncvar_get(nc, "quality_level")
   sst_prev <- ncvar_get(nc, "sea_surface_temperature")
   sst_prev[which(qflag_prev < 4)] <- NA
@@ -46,7 +39,7 @@ sst <- raster(t(sst), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat),
               crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
 # save data
-save(sst, file = paste0(basePath,"Simple_shiny_Climatology_dashboard_app/data/latestSST.Rdata"))
+save(sst, file = paste0(basePath,"data/SST/latestSST.Rdata"))
 
 # image(lon, lat, sst)
 # image(lon, lat, qflag)

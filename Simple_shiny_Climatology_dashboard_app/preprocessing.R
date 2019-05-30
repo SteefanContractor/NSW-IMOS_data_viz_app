@@ -7,15 +7,8 @@ library(lubridate)
 library(readODS)
 library(tidyverse)
 
-# change local to True when developing locally
-local = system("uname -n", intern = T) == "matht250"#T
-
-if (local) {
-  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
-  #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
-} else {
-  basePath <- "./data/"
-}
+# working directory is the data/ dir where relative to script loc
+basePath <- "./data/"
 
 nc <- nc_open(filename = paste0(basePath,"IMOS_NSW_TZ_S19530531040000Z_PH100NRSPHB_FV02_CLIMATOLOGY_TEMP_E20181206212730Z_C20190405161810Z.nc"))
 Temp_clim_mean <- ncvar_get(nc, varid = "TEMP_AVE")
@@ -163,4 +156,5 @@ num.coldwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_d
 stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
 
 rm(nc); gc()
-save.image(file = paste0(basePath,"prerundata_21052019.RData"))
+d <- format(Sys.Date(), "%Y%m%d")
+save.image(file = paste0(basePath,"prerundata_",d,".RData"))
