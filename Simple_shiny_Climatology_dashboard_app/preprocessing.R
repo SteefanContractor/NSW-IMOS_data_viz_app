@@ -155,6 +155,8 @@ num.coldwaves.RL5 <- lapply(pressures, FUN = create.num.True.runLen.TS, yearly_d
 
 stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
 
-rm(nc, basePath); gc()
+rm(nc); gc()
 d <- format(Sys.Date(), "%Y%m%d")
-save.image(file = paste0(basePath,"prerundata_",d,".RData"))
+objects <- ls()
+objects <- objects[!objects %in% c("basePath", "objects")]
+save(list = objects, file = paste0(basePath,"prerundata_",d,".RData"))
