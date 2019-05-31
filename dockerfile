@@ -13,7 +13,9 @@ RUN apt-get update && apt-get install -y \
 	systemd \
 	cron \
 	vim \
-	cdo
+	cdo \
+	gdal-bin \
+	libgdal-dev
 
 # create a root user ubuntu
 RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 ubuntu
@@ -21,13 +23,16 @@ RUN useradd -rm -d /home/ubuntu -s /bin/bash -g root -G sudo -u 1000 ubuntu
 RUN echo "ubuntu ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers 
 # switch to user ubuntu and working dir to home/ubuntu
 USER ubuntu
-WORKDIR /home/ubuntu
+WORKDIR /srv/shiny-server
+
+# Copy the shiny app to /srv/shiny-server/
+COPY Simple_shiny_Climatology_dashboard_app /srv/shiny-server/
 
 # Copy git repo data dir into the data dir on container
-COPY Simple_shiny_Climatology_dashboard_app/data /srv/shiny-server/data
+#COPY Simple_shiny_Climatology_dashboard_app/data /srv/shiny-server
 
 # copy getData.sh script to home dir
-COPY getData.sh /srv/shiny-server/
+#COPY Simple_shiny_Climatology_dashboard_app/getData.sh /srv/shiny-server/
 
 # make getData.sh executable
 RUN sudo chmod +x /srv/shiny-server/getData.sh
@@ -37,14 +42,6 @@ RUN sudo chmod +x /srv/shiny-server/getData.sh
 
 # run getData.sh in /srv/shiny-server
 RUN sudo /srv/shiny-server/getData.sh
-
-# copy preprocessing scripts
-COPY Simple_shiny_Climatology_dashboard_app/preprocessing.R /srv/shiny-server/
-COPY Simple_shiny_Climatology_dashboard_app/processRealtimeSSTdata.R /srv/shiny-server/
-
-# run the preprocessing scripts 
-RUN sudo Rscript /srv/shiny-server/preprocessing.R
-RUN sudo Rscript /srv/shiny-server/processRealtimeSSTdata.R
 
 # Copy hello-cron file to the cron.d directory
 COPY cron-job /etc/cron.d/cron-job
@@ -62,10 +59,15 @@ RUN sudo crontab /etc/cron.d/cron-job
 RUN sudo apt-get install -y libnetcdf-dev libudunits2-dev
 
 # install R packages
-RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet','raster'))"
+RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet','raster','rgdal'))"
 
-# Copy the shiny app to /srv/shiny-server/
-COPY Simple_shiny_Climatology_dashboard_app /srv/shiny-server/
+# copy preprocessing scripts
+COPY Simple_shiny_Climatology_dashboard_app/preprocessing.R /srv/shiny-server/
+COPY Simple_shiny_Climatology_dashboard_app/processRealtimeSSTdata.R /srv/shiny-server/
+
+# run the preprocessing scripts 
+RUN sudo Rscript /srv/shiny-server/preprocessing.R
+RUN sudo Rscript /srv/shiny-server/processRealtimeSSTdata.R
 
 # Give R read/write permissions in directory
 RUN sudo chown -R shiny:shiny /srv/shiny-server
