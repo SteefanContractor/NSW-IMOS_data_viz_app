@@ -25,30 +25,36 @@ plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
   nonNA_days <- which(!is.na(Temp_clim_P90[paste(depth),]) & !is.na(Temp_clim_P10[paste(depth),]) & !is.na(Temp_clim_mean[paste(depth),]))
   yday_noNA <- yday(dates)[nonNA_days]
   ylim <- range(Temp_clim_mean, Temp_clim_med, Temp_clim_P10, Temp_clim_P90, na.rm = T)
-  p <- plot_ly(y = ~Temp_clim_P90[paste(depth),yday_noNA], type = 'scatter', mode = 'lines',
+  smoothP90 <- rollmean(x = Temp_clim_P90[paste(depth),], k = as.numeric(smooth), fill = NA)
+  smoothP10 <- rollmean(x = Temp_clim_P10[paste(depth),], k = as.numeric(smooth), fill = NA)
+  smoothP90 <- smoothP90[paste(1:365)]
+  smoothP10 <- smoothP10[paste(1:365)]
+  p <- plot_ly(x = as.integer(names(smoothP90)), y = ~smoothP90, type = 'scatter', mode = 'lines',
                showlegend = F, name = "90th pc of climatology",
                line = list(color = "transparent"),
                hoverlabel = list(namelength = -1)) %>%
-    layout(title = paste("Pressure:", depth, "mbar"),
-           xaxis = list(title = "Day of the year", range = c(1,365)),
-           yaxis = list(title = paste(ifelse(mean, "Mean", "Median"), "temperature (degrees celcius)"),
-                        range = ylim),
-           paper_bgcolor = 'rgba(236,239,244,0)',
-           plot_bgcolor = 'rgba(236,239,244,0)') %>%
-    add_trace(y = ~Temp_clim_P10[paste(depth),yday_noNA], type = 'scatter', mode = "lines",
+    add_trace(x = as.integer(names(smoothP10)), y = ~smoothP10, type = 'scatter', mode = "lines",
               line = list(color = "transparent", name = "10th pc of climatology"),
               fill = "tonexty", fillcolor = "rgba(255,0,0,0.4)", hoverinfo = "none") %>%
-    add_trace(y = ~Temp_clim_P10[paste(depth),], type = 'scatter', mode = "lines",
+    add_trace(x = as.integer(names(smoothP10)), y = ~smoothP10, type = 'scatter', mode = "lines",
               line = list(color = "transparent"), name = "10th pc of climatology")
   if(mean){
     smoothTS <- rollmean(x = Temp_clim_mean[paste(depth),], k = as.numeric(smooth), fill = NA)
-    p <- p %>% add_trace(y = ~smoothTS, type = "scatter", mode = "lines",
-                             line = list(color = "black"), name = "Mean climatology")
+    smoothTS <- smoothTS[paste(1:365)]
+    p <- p %>% add_trace(x = as.integer(names(smoothTS)), y = ~smoothTS, type = "scatter", mode = "lines",
+                         line = list(color = "black"), name = "Mean climatology")
   } else {
     smoothTS <- rollmean(x = Temp_clim_med[paste(depth),], k = as.numeric(smooth), fill = NA)
-    p <- p %>% add_trace(y = ~smoothTS, type = "scatter", mode = "lines",
+    smoothTS <- smoothTS[paste(1:365)]
+    p <- p %>% add_trace(x = as.integer(names(smoothTS)), y = ~smoothTS, type = "scatter", mode = "lines",
                          line = list(color = "black"), name = "Median climatology")
   }
+  p <- p %>% layout(title = paste("Pressure:", depth, "mbar"),
+                    xaxis = list(title = "Day of the year", range = c(1,365)),
+                    yaxis = list(title = paste(ifelse(mean, "Mean", "Median"), "temperature (degrees celcius)"),
+                                 range = ylim),
+                    paper_bgcolor = 'rgba(236,239,244,0)',
+                    plot_bgcolor = 'rgba(236,239,244,0)')
   return(p)
 }
 
@@ -192,11 +198,14 @@ server <- function(input, output){
     p <- plot_temp_ts(mean = mean, depth = pressure, smooth = smooth)
     year = input$Year
     Temp_Avg <- yearly_data[[paste(year)]]
-    hotPts <- which(Temp_Avg[paste(pressure),] > Temp_clim_P90[paste(pressure),])
-    coldPts <- which(Temp_Avg[paste(pressure),] < Temp_clim_P10[paste(pressure),])
-    avgPts <- which(Temp_Avg[paste(pressure),] <= Temp_clim_P90[paste(pressure),] & Temp_Avg[paste(pressure),] >= Temp_clim_P10[paste(pressure),])
+    # colnames(Temp_Avg) <- rep("", ncol(Temp_Avg))
+    smoothP90 <- rollmean(x = Temp_clim_P90[paste(pressure),], k = as.numeric(smooth), fill = NA)
+    smoothP10 <- rollmean(x = Temp_clim_P10[paste(pressure),], k = as.numeric(smooth), fill = NA)
+    hotPts <- which(Temp_Avg[paste(pressure),] > smoothP90)
+    coldPts <- which(Temp_Avg[paste(pressure),] < smoothP10)
+    avgPts <- which(Temp_Avg[paste(pressure),] <= smoothP90 & Temp_Avg[paste(pressure),] >= smoothP10)
     if (any(avgPts)) {
-      p <- p %>% add_trace(x = ~avgPts, y = ~Temp_Avg[paste(pressure),avgPts], type = "scatter", mode = "markers",
+      p <- p %>% add_trace(x = ~as.integer(names(avgPts)), y = ~Temp_Avg[paste(pressure),names(avgPts)], type = "scatter", mode = "markers",
                     name = paste(year, "yearly data"),
                     marker = list(size = 12,
                                   color = "rgba(0,0,0,0.4)",
@@ -204,7 +213,7 @@ server <- function(input, output){
                                               width = 2)))
     }
     if (any(hotPts)) {
-     p <- p %>% add_trace(x = ~hotPts, y = ~Temp_Avg[paste(pressure),hotPts], type = "scatter", mode = "markers",
+     p <- p %>% add_trace(x = ~as.integer(names(hotPts)), y = ~Temp_Avg[paste(pressure),names(hotPts)], type = "scatter", mode = "markers",
                 name = paste(year, "yearly data"),
                 marker = list(size = 12,
                               color = "rgba(255,0,0,1)",
@@ -212,7 +221,7 @@ server <- function(input, output){
                                           width = 2)))
     }
     if (any(coldPts)) {
-      p <- p %>% add_trace(x = ~coldPts, y = ~Temp_Avg[paste(pressure),coldPts], type = "scatter", mode = "markers",
+      p <- p %>% add_trace(x = ~as.integer(names(coldPts)), y = ~Temp_Avg[paste(pressure),names(coldPts)], type = "scatter", mode = "markers",
                 name = paste(year, "yearly data"),
                 marker = list(size = 12,
                               color = "rgba(0,0,255,1)",
@@ -296,6 +305,8 @@ server <- function(input, output){
                 title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
       addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
       addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
+      addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Time of Latest SST data:<br>",df[1,1])),
+                          labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) %>%
       # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
       #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
       #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
@@ -326,7 +337,7 @@ server <- function(input, output){
         # overlayGroups = c("SST"),
         options = layersControlOptions(collapsed = FALSE),
         position = "topleft"
-      )
+      ) 
   })
   
   output$stationMap_About <- renderLeaflet({
