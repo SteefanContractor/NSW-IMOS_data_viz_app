@@ -34,8 +34,26 @@ for (t in 6:48){
   sst[which(is.na(sst) & qflag_prev >= 4)] <- sst_prev[which(is.na(sst) & qflag_prev >= 4)]
 }
 # convert to raster
+sst <- sst - 273.15
 sst <- raster(t(sst), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
               crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+
+# 90th percentile
+clim_90 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_90th_perc")
+clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
+clim.index <- which.min(abs(yday(format(df[1,'date_time'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
+# 10th percentile
+clim_10 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_90th_perc")
+clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
+
+sst_90 <- sst
+sst_90[which(sst_90[] < clim_90[[clim.index]][])] <- NA
+sst_10 <- sst
+sst_10[which(sst_10[] > clim_10[[clim.index]][])] <- NA
+
+sst_normal <- sst
+sst_normal[which(sst_normal[] > clim_90[[clim.index]][])] <- NA
+sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
 
 # save data
 save(sst, file = paste0(basePath,"data/SST/latestSST.Rdata"))
