@@ -7,7 +7,7 @@ library(zoo)
 library(raster) #
 
 # change local to True when developing locally
-local = system("uname -n", intern = T) == "matht250"#T
+local = system("uname -n", intern = T) == "MacBook-Pro-98.local" | system("uname -n", intern = T) == "matht250"#T
 
 if (local) {
   basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
@@ -294,6 +294,8 @@ server <- function(input, output){
     m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>% 
       addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
                 title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
+      addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
+      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
       # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
       #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
       #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
@@ -320,7 +322,8 @@ server <- function(input, output){
       # 
       # Layers control
       addLayersControl(
-        overlayGroups = c("SST"),
+        baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
+        # overlayGroups = c("SST"),
         options = layersControlOptions(collapsed = FALSE),
         position = "topleft"
       )
