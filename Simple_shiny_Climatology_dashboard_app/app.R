@@ -245,8 +245,8 @@ server <- function(input, output){
   output$num_MCW <- renderPlotly({
     pressure = input$Pressure2
     runLen = input$MHWLen
-    plot_ly(x=years,y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave", type = 'bar') %>%
-      add_trace(y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine heatwave") %>%
+    plot_ly(x=years,y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave", type = 'bar') %>%
+      add_trace(y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine heatwave") %>%
       layout(xaxis = list(title = "Years"),
              yaxis = list(title = "Number of events"),
              barmode = "group",
