@@ -73,7 +73,7 @@ is.cold.anomaly <- function(temp_ts, Temp_clim_P10_ts) {
 }
 
 num.True.runLen <- function(boolTS, runLen = 2) {
-  length(which(rle(boolTS)$lengths[which(rle(boolTS)$values == 1)] >= runLen))
+  length(which(rle(boolTS)$values[which(rle(boolTS)$lengths >= runLen)] == T))
 }
 
 num.complete.runs <- function(TS, runLen = 2) {
@@ -101,11 +101,11 @@ totalPossibleRuns <- function(TS, runLen = 2) {
 create.num.True.runLen.TS <- function(yearly_data, hotAnomaly = T, depth = pressures[1], runLen = 2) {
   sapply(lapply(yearly_data, FUN = function(x) {
     if (hotAnomaly) {
-      is.hot.anomaly(temp_ts = x[paste(depth),], 
-                     Temp_clim_P90_ts = Temp_clim_P90[paste(depth), ])
+      is.hot.anomaly(temp_ts = x[paste(depth), paste(1:365)], 
+                     Temp_clim_P90_ts = Temp_clim_P90[paste(depth), paste(1:365)])
     } else {
-      is.cold.anomaly(temp_ts = x[paste(depth),], 
-                      Temp_clim_P10_ts = Temp_clim_P10[paste(depth), ])
+      is.cold.anomaly(temp_ts = x[paste(depth), paste(1:365)], 
+                      Temp_clim_P10_ts = Temp_clim_P10[paste(depth), paste(1:365)])
     }
   }), FUN = num.True.runLen, runLen = runLen)
 }
@@ -113,7 +113,7 @@ create.num.True.runLen.TS <- function(yearly_data, hotAnomaly = T, depth = press
 create.num.complete.runs.TS <- function(yearly_data, depth = pressures[1], runLen = 2) {
   #sapply(l
   sapply(yearly_data, FUN = function(x, RL) {
-    totalPossibleRuns(x[paste(depth),], runLen = RL)#, 
+    totalPossibleRuns(x[paste(depth), paste(1:365)], runLen = RL)#, 
     # Temp_clim_P90_ts = Temp_clim_P90[paste(depth), ], 
     # Temp_clim_P10_ts = Temp_clim_P10[paste(depth), ])
   }, RL = runLen)#, FUN = num.complete.runs, runLen = runLen)
