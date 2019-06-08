@@ -104,9 +104,13 @@ ui <-
                          #           color = "blue", fill = T)
                          # ),
                          fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
-                         helpText(HTML("Colour of the labels indicate whether temperatures today are anomalous. A green label indicates the current temperatures are within the 10<sup>th</sup>",
-                                  "and 90<sup>th</sup> percentiles of the climatology, a red label indicates the current temperatures are greater than the 90<sup>th</sup> percentile, and",
-                                  "a blue label indicates the current temperatures are less than the 10<sup>th</sup> percentile."))
+                         helpText(HTML(paste(sep="</br>",
+                                             "<b>SST</b>: Hourly composites of Himawari-8 night-time skin temperature data in degrees celsius. Gaps filled with the last non-missing value in the last 48h",
+                                             "<b> Cold and Warm SSTs</b>: Cold (warm) SSTs are cooler (hotter) than the 10<sup>th</sup> (90<sup>th</sup>) percentiles of the monthly SST climatology.",
+                                       "<b>SST Climatology</b>: SSTAARS (SST Atlas of Australian Regional Seas) climatology created by fitting four annual sinusoids (and a trend) to 25 years of daily, night-only AVHRR SST, L3S-1d, provided by the Bureau of Meteorology (BoM).")))
+                                  #      "Colour of the labels indicate whether temperatures today are anomalous. A green label indicates the current temperatures are within the 10<sup>th</sup>",
+                                  # "and 90<sup>th</sup> percentiles of the climatology, a red label indicates the current temperatures are greater than the 90<sup>th</sup> percentile, and",
+                                  # "a blue label indicates the current temperatures are less than the 10<sup>th</sup> percentile."))
                  ),
                  tabItem("PH100_Clim",
                           sidebarLayout(
@@ -154,8 +158,8 @@ ui <-
                  ),
                  tabItem("About",
                          verticalLayout(
-                           tags$head(HTML('<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true&callback=initMap"></script>
-                                          <script type="text/javascript" src="imos_map.js"></script>')),
+                           # tags$head(HTML('<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true&callback=initMap"></script>
+                           #                <script type="text/javascript" src="imos_map.js"></script>')),
                            #<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true"></script>,
                            tags$body(onload="initialize()",
                                      titlePanel("About"),
@@ -177,8 +181,8 @@ ui <-
                                              tags$li("To integrate the ecosystem response with oceanographic processes.")),
                                      h3("Moorings"),
                                      p("The following map shows the locations of all the moorings maintained by the NSW node of IMOS."),
-                                     # leafletOutput("stationMap_About", height = 600),
-                           HTML('<div id="map_canvas" style="margin-left:30px;width:90%; height:600px;">'))
+                                     leafletOutput("stationMap_About", height = 600))
+                           # HTML('<div id="map_canvas" style="margin-left:30px;width:90%; height:600px;">'))
                          )
                            
                            # htmlOutput("test")
@@ -341,9 +345,72 @@ server <- function(input, output){
   })
   
   output$stationMap_About <- renderLeaflet({
-    stationLocs <- read_ods(paste0(basePath, "NSW-IMOS_assets_2018-10-30.ods"))
-    colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
-    leaflet() %>% addTiles() %>% addMarkers(data = stationLocs, lat = ~avg_lat, lng = ~avg_lon, popup = ~site_code)
+    leaflet() %>% addTiles() %>%
+      addMarkers(lat = -33.841, lng = 151.264, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">SHMO</h1>',
+                                     '<div id="bodyContent">',
+                                     '<p>The <b>S</b>ydney <b>H</b>arbour <b>M</b>arine <b>O</b>bservatory Realtime Buoy <b>SHMO</b> is located 0.4nm Southwest of the Sow and Pigs Reef between the Western and Eastern Channel.</p>',
+                                     '<p><a href="http://www.oceanography.unsw.edu.au/realtime.html">',
+                                     'Link to realtime data</a></p>'))
+      ) %>%
+      addMarkers(lat = -30.275, lng = 153.300, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">CH070</h1>',
+                                     '<p>The Coffs Harbour mooring <b>CH070</b> is located in 70 m water depth</p>',
+                                     '<p><a href="./nsw-imos/CH070_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -30.268, lng = 153.397, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">CH100</h1>',
+                                     '<div id="bodyContent">',
+                                     '<p>The Coffs Harbour mooring <b>CH100</b> is located in 100 m water depth</p>',
+                                     '<p><a href="./nsw-imos/CH100_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -33.898, lng = 151.315, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">ORS065</h1>',
+                                     '<p>The Sydney Water Ocean Reference Station mooring <b>ORS065</b> is located in 65 m water depth</p>',
+                                     '<p><a href="./nsw-imos/ORS065_latest.html">',
+                                     'Plot of 12 Month Data</a></p>',
+                                     '<p><a href="./nsw-imos/ORS065_Realtime.html">',
+                                     'Plot of Realtime Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -33.943, lng = 151.382, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">SYD100</h1>',
+                                     '<div id="bodyContent">',
+                                     '<p>The Sydney mooring <b>SYD100</b> is located in 100 m water depth</p>',
+                                     '<p><a href="./nsw-imos/SYD100_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -33.994, lng = 151.495, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">SYD140</h1>',
+                                     '<p>The Sydney mooring <b>SYD140</b> is located in 140 m water depth</p>',
+                                     '<p><a href="./nsw-imos/SYD140_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -34.120, lng = 151.224, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">PH100</h1>',
+                                     '<p>The Port Hacking NRS mooring <b>PH100</b> is located in 100 m water depth</p>',
+                                     '<p><a href="./nsw-imos/PH100_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -36.19, lng = 150.19, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">BMP070</h1>',
+                                     '<p>The Batemans Marine Park mooring <b>BMP070</b> is located in 70 m water depth</p>',
+                                     '<p><a href="./nsw-imos/BMP070_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -36.192, lng = 150.233, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">BMP090</h1>',
+                                     '<p>The Batemans Marine Park mooring <b>BMP090</b> was located in 90 m water depth</p>',
+                                     '<p><a href="./nsw-imos/BMP090_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      ) %>%
+      addMarkers(lat = -36.213, lng = 150.309, 
+                 popup = HTML(paste0('<h1 id="firstHeading" class="firstHeading">BMP120</h1>',
+                                     '<p>The Batemans Marine Park mooring <b>BMP120</b> is located in 120 m water depth</p>',
+                                     '<p><a href="./nsw-imos/BMP120_latest.html">',
+                                     'Plot of 12 Month Data</a></p>'))
+      )
   })
 }
 
