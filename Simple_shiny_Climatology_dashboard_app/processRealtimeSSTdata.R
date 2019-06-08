@@ -56,7 +56,7 @@ sst_normal[which(sst_normal[] > clim_90[[clim.index]][])] <- NA
 sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
 
 # save data
-save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, file = paste0(basePath,"data/SST/latestSST.Rdata"))
+save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePath,"data/SST/latestSST.Rdata"))
 
 # image(lon, lat, sst)
 # image(lon, lat, qflag)
