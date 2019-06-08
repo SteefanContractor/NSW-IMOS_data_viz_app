@@ -1,5 +1,7 @@
 30 03,07,11,15,19,23 * * * cd /srv/shiny-server && /srv/shiny-server/getData.sh > /var/log/getData.log 2>&1
 # also run processRealtimeSSTdata.log
 45 03,07,11,15,19,23 * * * cd /srv/shiny-server && /usr/local/bin/Rscript /srv/shiny-server/processRealtimeSSTdata.R > /var/log/processRealtimeSSTdata.log 2>&1
+# touch restart so app updates after new SST data processing
+55 03,07,11,15,19,23 * * * cd /srv/shiny-server && touch restart.txt
 # An empty line is required at the end of this file for a valid cron file.
 
