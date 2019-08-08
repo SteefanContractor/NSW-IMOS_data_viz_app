@@ -43,7 +43,7 @@ clim_90 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_90th_perc")
 clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
 clim.index <- which.min(abs(yday(format(df[1,'date_time'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
 # 10th percentile
-clim_10 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_90th_perc")
+clim_10 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_10th_perc")
 clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
 
 sst_90 <- sst
