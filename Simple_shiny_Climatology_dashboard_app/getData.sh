@@ -51,4 +51,31 @@ if [ -s newfiles.txt ]; then
 fi
 
 rm lastwatch
+
+###############################################################
+# Download HF Radar data for the latest day for NEWC and COFH
+###############################################################
+
+latestdate=`ls *.nc | cut -c1-8 | tail -n 1`
+year=${latestdate:0:4}
+month=${latestdate:4:2}
+day=${latestdate:6:2}
+latesttime=`ls *.nc | cut -c9-14 | tail -n 1`
+
+cd ../
+
+if [ ! -d HFRadar ]; then mkdir HFRadar; fi
+cd HFRadar
+if [ ! -d NEWC ]; then mkdir NEWC; fi
+#if [ ! -d COFH ]; then mkdir COFH; fi
+
+cd NEWC
+rm *.nc
+wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesttime"Z_NEWC_FV00_1-hour-avg.nc 
+cd ..
+
+#cd COFH
+#wget -q -nc -A.nc 
+#cd ..
+
 cd ../..

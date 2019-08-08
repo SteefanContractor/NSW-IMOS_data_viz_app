@@ -58,13 +58,29 @@ sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
 # save data
 save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePath,"data/SST/latestSST.Rdata"))
 
-# image(lon, lat, sst)
-# image(lon, lat, qflag)
-# map("world", resolution = 0, add = T)
-# 
-# library(plotly)
-# 
-# sst.df <- data.frame(expand.grid(lon,lat), sst = c(sst))
-# colnames(sst.df) <- c("lon", "lat", "sst")
-# plot_ly(data = sst.df, x = lon, y = lat, z = t(sst), type = "heatmap")
-# image(lon, lat, qflag)
+##########################
+# HF Radar data
+##########################
+
+fname <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx("*.nc"))
+
+nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fname))
+ucur <- ncvar_get(nc, "UCUR")
+vcur <- ncvar_get(nc, "VCUR")
+lat <- ncvar_get(nc, "LATITUDE")
+lon <- ncvar_get(nc, "LONGITUDE")
+ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+nc_close(nc)
+
+lat <- apply(lat, 2, mean)
+lon <- apply(lon, 1, mean)
+ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur))] <- NA
+vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur))] <- NA
+
+lonlat <- expand.grid(lon, lat)
+w = 0.5 # scaling factor for arrows
+uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur)*w, lat1 = lonlat[,2]+c(vcur)*w)
+uv_cart_df <- uv_cart_df %>% filter(!is.na(lon1))
+save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/NEWC/NEWC_HFRadar.RData"))
+

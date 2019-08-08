@@ -5,6 +5,10 @@ library(plotly)
 library(lubridate)
 library(zoo) 
 library(raster) #
+library(shiny)
+library(shinydashboard)
+library(leaflet)
+library(leaflet.minicharts)
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "MacBook-Pro-98.local" | system("uname -n", intern = T) == "matht250"#T
@@ -19,6 +23,7 @@ if (local) {
 prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RData")), decreasing = T)[1]
 load(paste0(basePath, prerundata.file))
 load(paste0(basePath, "SST/latestSST.Rdata"))
+load(paste0(basePath, "HFRadar/NEWC/NEWC_HFRadar.RData"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
@@ -58,10 +63,6 @@ plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
   return(p)
 }
 
-
-library(shiny)
-library(shinydashboard)
-library(leaflet)
 
 ui <- 
   # fluidPage(
@@ -104,6 +105,9 @@ ui <-
                          #           color = "blue", fill = T)
                          # ),
                          fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
+                         div(style="padding-left: 10px", absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
+                                       draggable = TRUE, top = 580, left = "auto", width = 100, 
+                                       div(style = "padding-left: 5px", checkboxInput(inputId = "HFRadar_checkbox",label = "HF Radar", value = T)))),
                          helpText(HTML(paste(sep="</br>",
                                              "<b>SST</b>: Hourly composites of Himawari-8 night-time skin temperature data in degrees celsius. Gaps filled with the last non-missing value in the last 48h",
                                              "<b> Cold and Warm SSTs</b>: Cold (warm) SSTs are cooler (hotter) than the 10<sup>th</sup> (90<sup>th</sup>) percentiles of the monthly SST climatology.",
@@ -338,10 +342,21 @@ server <- function(input, output){
       # Layers control
       addLayersControl(
         baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
-        # overlayGroups = c("SST"),
+        # overlayGroups = c("NEWC_HFRadar"),
         options = layersControlOptions(collapsed = FALSE),
         position = "topleft"
-      ) 
+      ) %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+  })
+  
+  observeEvent(input$HFRadar_checkbox, {
+    
+    m <- leafletProxy("stationMap_Home")
+    
+    if(input$HFRadar_checkbox) {
+      m %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+    } else {
+      m %>% clearFlows()
+    }
   })
   
   output$stationMap_About <- renderLeaflet({
