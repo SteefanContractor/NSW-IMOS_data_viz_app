@@ -77,8 +77,8 @@ if (length(fname) > 0) {
   
   lat <- apply(lat, 2, mean)
   lon <- apply(lon, 1, mean)
-  ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur_newc))] <- NA
-  vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur_newc))] <- NA
+  ucur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(vcur_newc)))] <- NA
+  vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
   w = 0.5 # scaling factor for arrows
@@ -106,8 +106,8 @@ if (length(fname) > 0) {
   
   # lat <- apply(lat, 2, mean)
   # lon <- apply(lon, 1, mean)
-  ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur_cofh))] <- NA
-  vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur_cofh))] <- NA
+  ucur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(vcur_cofh)))] <- NA
+  vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
   w = 0.5 # scaling factor for arrows
