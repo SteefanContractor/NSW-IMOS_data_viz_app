@@ -62,25 +62,64 @@ save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePa
 # HF Radar data
 ##########################
 
+# NEWC
 fname <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx("*.nc"))
 
-nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fname))
-ucur <- ncvar_get(nc, "UCUR")
-vcur <- ncvar_get(nc, "VCUR")
-lat <- ncvar_get(nc, "LATITUDE")
-lon <- ncvar_get(nc, "LONGITUDE")
-ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
-vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
-nc_close(nc)
+if (length(fname) > 0) {
+  nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fname))
+  ucur_newc <- ncvar_get(nc, "UCUR")
+  vcur_newc <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  lat <- apply(lat, 2, mean)
+  lon <- apply(lon, 1, mean)
+  ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur_newc))] <- NA
+  vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur_newc))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 0.5 # scaling factor for arrows
+  uv_cart_df_newc <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_newc)*w, lat1 = lonlat[,2]+c(vcur_newc)*w)
+  uv_cart_df_newc <- uv_cart_df_newc %>% filter(!is.na(lon1))
+} else {
+  ucur_newc <- c()
+  vcur_newc <- c()
+  uv_cart_df_newc <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("lon0", "lat0", "lon1", "lat1"))
+}
+# save(ucur_newc, vcur_newc, uv_cart_df_newc, file = paste0(basePath, "data/HFRadar/NEWC/NEWC_HFRadar.RData"))
 
-lat <- apply(lat, 2, mean)
-lon <- apply(lon, 1, mean)
-ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur))] <- NA
-vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur))] <- NA
+# COFH
+fname <- list.files(paste0(basePath, "data/HFRadar/COFH"), pattern = glob2rx("*.nc"))
 
-lonlat <- expand.grid(lon, lat)
-w = 0.5 # scaling factor for arrows
-uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur)*w, lat1 = lonlat[,2]+c(vcur)*w)
-uv_cart_df <- uv_cart_df %>% filter(!is.na(lon1))
-save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/NEWC/NEWC_HFRadar.RData"))
+if (length(fname) > 0) {
+  nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fname))
+  ucur_cofh <- ncvar_get(nc, "UCUR")
+  vcur_cofh <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  # lat <- apply(lat, 2, mean)
+  # lon <- apply(lon, 1, mean)
+  ucur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(vcur_cofh))] <- NA
+  vcur[which(!ucur_qc %in% c(1,2) & !vcur_qc %in% c(1,2) & is.na(ucur_cofh))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 0.5 # scaling factor for arrows
+  uv_cart_df_cofh <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_cofh)*w, lat1 = lonlat[,2]+c(vcur_cofh)*w)
+  uv_cart_df_cofh <- uv_cart_df_cofh %>% filter(!is.na(lon1))
+} else {
+  ucur_cofh <- c()
+  vcur_cofh <- c()
+  uv_cart_df_cofh <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("lon0", "lat0", "lon1", "lat1"))
+}
 
+ucur <- c(ucur_newc, ucur_cofh)
+vcur <- c(vcur_newc, vcur_cofh)
+uv_cart_df <- rbind(uv_cart_df_newc, uv_cart_df_cofh)
+save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))

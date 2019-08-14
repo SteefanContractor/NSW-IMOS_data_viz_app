@@ -23,7 +23,7 @@ if (local) {
 prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RData")), decreasing = T)[1]
 load(paste0(basePath, prerundata.file))
 load(paste0(basePath, "SST/latestSST.Rdata"))
-load(paste0(basePath, "HFRadar/NEWC/NEWC_HFRadar.RData"))
+load(paste0(basePath, "HFRadar/HFRadar.RData"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
