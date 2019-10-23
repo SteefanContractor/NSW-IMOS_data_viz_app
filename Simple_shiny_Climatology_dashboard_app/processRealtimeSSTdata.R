@@ -39,12 +39,12 @@ sst <- raster(t(sst), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat),
               crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
 # 90th percentile
-clim_90 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_90th_perc")
-clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
+clim_90 <- brick("./data/SSTAARS_nsw_narrow.nc", varname = "TEMP_90th_perc")
+clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw_narrow.nc", intern = T), split = "  ")[[1]][-1]))
 clim.index <- which.min(abs(yday(format(df[1,'date_time'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
 # 10th percentile
-clim_10 <- brick("./data/SSTAARS_nsw.nc", varname = "TEMP_10th_perc")
-clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw.nc", intern = T), split = "  ")[[1]][-1]))
+clim_10 <- brick("./data/SSTAARS_nsw_narrow.nc", varname = "TEMP_10th_perc")
+clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw_narrow.nc", intern = T), split = "  ")[[1]][-1]))
 
 sst_90 <- sst
 sst_90[which(sst_90[] < clim_90[[clim.index]][])] <- NA
@@ -81,7 +81,7 @@ if (length(fname) > 0) {
   vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 0.5 # scaling factor for arrows
+  w = 0.1 # scaling factor for arrows
   uv_cart_df_newc <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_newc)*w, lat1 = lonlat[,2]+c(vcur_newc)*w)
   uv_cart_df_newc <- uv_cart_df_newc %>% filter(!is.na(lon1))
 } else {
@@ -110,7 +110,7 @@ if (length(fname) > 0) {
   vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 0.5 # scaling factor for arrows
+  w = 0.1 # scaling factor for arrows
   uv_cart_df_cofh <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_cofh)*w, lat1 = lonlat[,2]+c(vcur_cofh)*w)
   uv_cart_df_cofh <- uv_cart_df_cofh %>% filter(!is.na(lon1))
 } else {
