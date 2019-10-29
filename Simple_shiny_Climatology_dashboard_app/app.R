@@ -255,7 +255,7 @@ server <- function(input, output){
     runLen = input$MHWLen
     plot_ly(x=years,y=get(paste0("num.coldwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine coldwave", type = 'bar') %>%
       add_trace(y=get(paste0("num.heatwaves.RL", runLen))[[which(pressures == pressure)]], name = "Marine heatwave") %>%
-      layout(xaxis = list(title = "Years"),
+      layout(xaxis = list(title = "Years", range=c(2009,2019)),
              yaxis = list(title = "Number of events"),
              barmode = "group",
              legend = list(x = 0, y = 0.99),
@@ -275,7 +275,7 @@ server <- function(input, output){
     }
     plot_ly(x=years,y=totalPossibleRuns_TS, name = paste("Total possible events of length", runLen),
             type = 'bar') %>%
-      layout(xaxis = list(title = "Years"),
+      layout(xaxis = list(title = "Years", range = c(2009, 2019)),
              yaxis = list(title = ylab),
              paper_bgcolor = 'rgba(236,239,244,0)',
              plot_bgcolor = 'rgba(236,239,244,0)')
