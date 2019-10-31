@@ -24,6 +24,7 @@ prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RDa
 load(paste0(basePath, prerundata.file))
 load(paste0(basePath, "SST/latestSST.Rdata"))
 load(paste0(basePath, "HFRadar/HFRadar.RData"))
+load(paste0(basePath, "CHL_OC3/CHL_OC3.RData"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
@@ -104,7 +105,12 @@ ui <-
                          #   infoBox(title = "Sydney Moorings",subtitle = "Climatology Temperature Today", 16, icon = icon("fire"),
                          #           color = "blue", fill = T)
                          # ),
-                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
+                         wellPanel(selectInput(inputId = "SSTtype",
+                                               label = "Base layer",
+                                               choices = c("SST", "Warm SSTs", "Cold SSTs", "Ocean Colour (Chl-a)"))),
+                         htmlOutput("frame"),
+                         # HTML("<iframe src='figures/homemap_ggplotly_SSTonly.html' width='100%' height='500'></iframe>"),
+                         # fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
                          # div(style="padding-left: 10px", absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                          #               draggable = TRUE, top = 580, left = "auto", width = 100, 
                                        # div(style = "padding-left: 5px", checkboxInput(inputId = "HFRadar_checkbox",label = "HF Radar", value = T)))),
@@ -199,6 +205,20 @@ ui <-
 
 server <- function(input, output){
   
+  output$frame <- renderUI({
+    ssttype <- input$SSTtype
+    if (ssttype == "SST") {
+      homemap <- tags$iframe(src="figures/homemap_ggplotly_SSTonly.html", width="100%", height="500")
+    } else if (ssttype == "Warm SSTs") {
+      homemap <- tags$iframe(src="figures/homemap_ggplotly_warmSSTs.html", width="100%", height="500")
+    } else if (ssttype == "Cold SSTs") {
+      homemap <- tags$iframe(src="figures/homemap_ggplotly_coldSSTs.html", width="100%", height="500")
+    } else {
+      homemap <- tags$iframe(src="figures/homemap_ggplotly_CHL-OC3.html", width="100%", height="500")
+    }
+    homemap
+  })
+  
   output$clim_plot <- renderPlotly({
     pressure = input$Pressure
     mean = input$Mean == "Mean"
@@ -287,66 +307,66 @@ server <- function(input, output){
   output$Caption_tab2 <- renderText("TOP: Number of marine temperature anomalies each year.
                                     BOTTOM: The maximum possible number of heat/coldwaves of specified length that can be detected based on the number of missing values in the data. As an example, a value of 80 on the log scale represents 10^80 possibilities for a heat/coldwave.")
   
-  output$stationMap_Home <- renderLeaflet({
-    colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
-    stationLocs <- stationLocs %>% slice(c(3,6,8,9))
-    
-    # generate random temperatures based on climatology distributions
-    doy  = yday(Sys.Date())
-    sd = max((Temp_clim_P90[1,doy] - Temp_clim_mean[1,doy])/1.28, (Temp_clim_mean[1,doy] - Temp_clim_P10[1,doy])/1.28, na.rm = T)
-    rTemps <- rnorm(4, mean = Temp_clim_mean[1,doy], sd = sd)
-    
-    # determine background-color based on climatology and rTemps
-    rBG <- ifelse(rTemps < Temp_clim_P10[1, doy], "rgba(0,0,255,0.5)", 
-                  ifelse(rTemps <= Temp_clim_P90[1, doy], "rgba(0,255,0,0.5)", "rgba(255,0,0,0.5)"))
-    
-    # determine colourmapping for sst raster image
-    pal <- colorNumeric(
-      palette = "magma",
-      domain = values(sst),
-      na.color = "#00000000")
-    
-    m <- leaflet() %>% addTiles() 
-    
-    m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>% 
-      addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
-                title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
-      addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
-      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
-      addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Time of Latest SST data:<br>",df[1,1])),
-                          labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) %>%
-      # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
-      #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
-      #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-      #                                                                   style = list("background-color" = rBG[1])),
-      #                                       group = "Moorings") %>%
-      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
-      #            label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% dplyr::select(site_code), paste(round(rTemps[2],1), "degrees"))),
-      #            labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
-      #                                        style = list("background-color" = rBG[2])),
-      #            group = "Moorings") %>%
-      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
-      #            label = HTML(paste(sep = "<br/>", 
-      #                               a(paste(stationLocs %>% dplyr::filter(site_code == "PH100") %>% dplyr::select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
-      #                               paste(round(rTemps[3],1), "degrees"))),
-      #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-      #                                        style = list("background-color" = rBG[3],
-      #                                                     "pointer-events" = "auto")),
-      #            group = "Moorings") %>%
-      # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
-      #            label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "BMP120") %>% dplyr::select(site_code), paste(round(rTemps[4],1), "degrees"))),
-      #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
-      #                                        style = list("background-color" = rBG[4])),
-      #            group = "Moorings") %>%
-      # 
-      # Layers control
-      addLayersControl(
-        baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
-        # overlayGroups = c("NEWC_HFRadar"),
-        options = layersControlOptions(collapsed = FALSE),
-        position = "topleft"
-      )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
-  })
+  # output$stationMap_Home <- renderLeaflet({
+  #   # colnames(stationLocs) <- c("site_code", "avg_lat", "avg_lon")
+  #   # stationLocs <- stationLocs %>% slice(c(3,6,8,9))
+  #   # 
+  #   # # generate random temperatures based on climatology distributions
+  #   # doy  = yday(Sys.Date())
+  #   # sd = max((Temp_clim_P90[1,doy] - Temp_clim_mean[1,doy])/1.28, (Temp_clim_mean[1,doy] - Temp_clim_P10[1,doy])/1.28, na.rm = T)
+  #   # rTemps <- rnorm(4, mean = Temp_clim_mean[1,doy], sd = sd)
+  #   # 
+  #   # # determine background-color based on climatology and rTemps
+  #   # rBG <- ifelse(rTemps < Temp_clim_P10[1, doy], "rgba(0,0,255,0.5)", 
+  #   #               ifelse(rTemps <= Temp_clim_P90[1, doy], "rgba(0,255,0,0.5)", "rgba(255,0,0,0.5)"))
+  #   
+  #   # determine colourmapping for sst raster image
+  #   pal <- colorNumeric(
+  #     palette = "magma",
+  #     domain = values(sst),
+  #     na.color = "#00000000")
+  #   
+  #   m <- leaflet() %>% addTiles() 
+  #   
+  #   m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>% 
+  #     addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
+  #               title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
+  #     addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
+  #     addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
+  #     addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Time of Latest SST data:<br>",df[1,1])),
+  #                         labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) %>%
+  #     # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon, 
+  #     #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
+  #     #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+  #     #                                                                   style = list("background-color" = rBG[1])),
+  #     #                                       group = "Moorings") %>%
+  #     # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon, 
+  #     #            label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% dplyr::select(site_code), paste(round(rTemps[2],1), "degrees"))),
+  #     #            labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
+  #     #                                        style = list("background-color" = rBG[2])),
+  #     #            group = "Moorings") %>%
+  #     # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon, 
+  #     #            label = HTML(paste(sep = "<br/>", 
+  #     #                               a(paste(stationLocs %>% dplyr::filter(site_code == "PH100") %>% dplyr::select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
+  #     #                               paste(round(rTemps[3],1), "degrees"))),
+  #     #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+  #     #                                        style = list("background-color" = rBG[3],
+  #     #                                                     "pointer-events" = "auto")),
+  #     #            group = "Moorings") %>%
+  #     # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon, 
+  #     #            label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "BMP120") %>% dplyr::select(site_code), paste(round(rTemps[4],1), "degrees"))),
+  #     #            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+  #     #                                        style = list("background-color" = rBG[4])),
+  #     #            group = "Moorings") %>%
+  #     # 
+  #     # Layers control
+  #     addLayersControl(
+  #       baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
+  #       # overlayGroups = c("NEWC_HFRadar"),
+  #       options = layersControlOptions(collapsed = FALSE),
+  #       position = "topleft"
+  #     )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+  # })
   
   # observeEvent(input$HFRadar_checkbox, {
   #   

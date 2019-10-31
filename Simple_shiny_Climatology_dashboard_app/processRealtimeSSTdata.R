@@ -58,6 +58,8 @@ sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
 # save data
 save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePath,"data/SST/latestSST.Rdata"))
 
+
+
 ##########################
 # HF Radar data
 ##########################
@@ -123,3 +125,69 @@ ucur <- c(ucur_newc, ucur_cofh)
 vcur <- c(vcur_newc, vcur_cofh)
 uv_cart_df <- rbind(uv_cart_df_newc, uv_cart_df_cofh)
 save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
+
+#####################
+# CHL_OC3 data
+#####################
+
+# Get list of downloaded files
+fname <- list.files(paste0(basePath, "data/CHL_OC3"), pattern = glob2rx("*.nc"))
+
+# Get the latest file
+fname <- sort(fname, decreasing = T)[1]
+
+# Open and read file
+nc <- nc_open(paste0(basePath, "data/CHL_OC3/", fname))
+chl_oc3 <- raster(paste0(basePath, "./data/CHL_OC3/", fname), varname = "chl_oc3")
+dec2bin <- function(x) paste(as.integer(rev(intToBits(x))), collapse = "")
+save(chl_oc3, file = paste0(basePath, "data/CHL_OC3/CHL_OC3.RData"))
+
+#################################
+# Save ggplotly plots as widgets
+#################################
+library(ggplot2)
+library(htmlwidgets)
+library(plotly)
+
+p <- ggplot() +
+  geom_raster(data = sst_df, aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis_c(option="A")+
+  coord_quickmap()
+gp <- ggplotly(p)
+
+saveWidget(gp, file="homemap_ggplotly_SSTonly.html", 
+           libdir = paste0(basePath, "homelibdir"),
+           selfcontained = F)
+
+p <- ggplot() +
+  geom_raster(data = sst_10_df, aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis_c(option="A")+
+  coord_quickmap()
+gp <- ggplotly(p)
+
+saveWidget(gp, file="homemap_ggplotly_coldSSTs.html", 
+           libdir = paste0(basePath, "homelibdir"),
+           selfcontained = F)
+
+p <- ggplot() +
+  geom_raster(data = sst_90_df, aes(x=x, y=y, fill=layer)) +
+  scale_fill_viridis_c(option="A")+
+  coord_quickmap()
+gp <- ggplotly(p)
+
+saveWidget(gp, file="homemap_ggplotly_warmSSTs.html", 
+           libdir = paste0(basePath, "homelibdir"),
+           selfcontained = F)
+
+p2 <- ggplot() +
+  geom_raster(data = chl_oc3_df, aes(x=x, y=y, fill=Chlorophyll.Concentration..OC3.Algorithm)) +
+  scale_fill_viridis_c(name="Chlorophyll-a OC3", breaks = c(0.1, 0.5, 1, 5, 10, 100, 150), trans="log")+
+  coord_quickmap()
+gp2 <- ggplotly(p2)
+
+saveWidget(gp2, file="homemap_ggplotly_CHL-OC3.html", 
+           libdir = paste0(basePath, "homelibdir"),
+           selfcontained = F)
+
+system("rm -r www/figures/homemap*.html www/figures/homelibdir")
+system("mv *.html homelibdir www/figures/")
