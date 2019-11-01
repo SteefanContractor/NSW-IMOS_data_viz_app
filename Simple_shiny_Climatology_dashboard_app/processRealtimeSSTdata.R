@@ -58,6 +58,8 @@ sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
 # save data
 save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePath,"data/SST/latestSST.Rdata"))
 
+
+
 ##########################
 # HF Radar data
 ##########################
@@ -123,3 +125,19 @@ ucur <- c(ucur_newc, ucur_cofh)
 vcur <- c(vcur_newc, vcur_cofh)
 uv_cart_df <- rbind(uv_cart_df_newc, uv_cart_df_cofh)
 save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
+
+#####################
+# CHL_OC3 data
+#####################
+
+# Get list of downloaded files
+fname <- list.files(paste0(basePath, "data/CHL_OC3"), pattern = glob2rx("*.nc"))
+
+# Get the latest file
+fname <- sort(fname, decreasing = T)[1]
+
+# Open and read file
+nc <- nc_open(paste0(basePath, "data/CHL_OC3/", fname))
+chl_oc3 <- raster(paste0(basePath, "./data/CHL_OC3/", fname), varname = "chl_oc3")
+dec2bin <- function(x) paste(as.integer(rev(intToBits(x))), collapse = "")
+save(chl_oc3, file = paste0(basePath, "data/CHL_OC3/CHL_OC3.RData"))
