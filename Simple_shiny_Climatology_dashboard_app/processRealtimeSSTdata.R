@@ -5,6 +5,8 @@ library(ncdf4)
 library(lubridate)
 library(dplyr)
 library(raster) #
+library(leaflet)
+library(htmlwidgets)
 
 # working directory is where the script is
 basePath <- "./"
@@ -123,3 +125,63 @@ ucur <- c(ucur_newc, ucur_cofh)
 vcur <- c(vcur_newc, vcur_cofh)
 uv_cart_df <- rbind(uv_cart_df_newc, uv_cart_df_cofh)
 save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
+
+##################################
+# save leaflet map on home page as html widget
+##################################
+
+# create leaflet map
+
+# determine colourmapping for sst raster image
+pal <- colorNumeric(
+  palette = "magma",
+  domain = values(sst),
+  na.color = "#00000000")
+
+m <- leaflet() %>% addTiles()
+
+m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
+  addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
+            title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
+  addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
+  addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
+  addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Time of Latest SST data:<br>",df[1,1])),
+                      labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) %>%
+  # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon,
+  #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
+  #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+  #                                                                   style = list("background-color" = rBG[1])),
+  #                                       group = "Moorings") %>%
+  # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "SYD100"), lat = ~avg_lat, lng = ~avg_lon,
+  #            label = HTML(paste(sep = "<br/>", stationLocs %>% filter(site_code == "SYD100") %>% dplyr::select(site_code), paste(round(rTemps[2],1), "degrees"))),
+  #            labelOptions = labelOptions(noHide = T, direction = "right", textsize = "15px",
+  #                                        style = list("background-color" = rBG[2])),
+  #            group = "Moorings") %>%
+  # addMarkers(data = stationLocs %>% dplyr::filter(site_code == "PH100"), lat = ~avg_lat, lng = ~avg_lon,
+#            label = HTML(paste(sep = "<br/>",
+#                               a(paste(stationLocs %>% dplyr::filter(site_code == "PH100") %>% dplyr::select(site_code)), onclick = "openTab('PH100_Clim')", href="#"),
+#                               paste(round(rTemps[3],1), "degrees"))),
+#            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+#                                        style = list("background-color" = rBG[3],
+#                                                     "pointer-events" = "auto")),
+#            group = "Moorings") %>%
+# addMarkers(data = stationLocs %>% dplyr::filter(site_code == "BMP120"), lat = ~avg_lat, lng = ~avg_lon,
+#            label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "BMP120") %>% dplyr::select(site_code), paste(round(rTemps[4],1), "degrees"))),
+#            labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
+#                                        style = list("background-color" = rBG[4])),
+#            group = "Moorings") %>%
+#
+# Layers control
+addLayersControl(
+  baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
+  # overlayGroups = c("NEWC_HFRadar"),
+  options = layersControlOptions(collapsed = FALSE),
+  position = "topleft"
+)# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+
+# save leaflet map as html widget
+system("if [ ! -d www/figures ]; then mkdir www/figures; fi")
+# system("if [ ! -d www/figures/libdir ]; then mkdir www/figures/libdir; fi")
+f <- "www/figures/home_leaflet_map.html"
+saveWidget(m, file=file.path(normalizePath(dirname(f)),basename(f)), libdir = "libdir",
+           selfcontained = F)
