@@ -62,6 +62,8 @@ month=${latestdate:4:2}
 day=${latestdate:6:2}
 latesttime=`ls *.nc | cut -c9-14 | tail -n 1`
 latesthour=${latesttime:0:2}
+latesthourminus1=$(( latesthour - 1 ))
+latesthourminus2=$(( latesthour - 2 ))
 #if [ 10#$latesthour -eq 0 ]; then 
 #	latesthourminus1=23
 #	day=`printf "%02d" $(( 10#$day - 1 ))`
@@ -79,11 +81,15 @@ if [ ! -d COFH ]; then mkdir COFH; fi
 cd NEWC
 rm *.nc
 wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesttime"Z_NEWC_FV00_1-hour-avg.nc 
+wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus1"0000Z_NEWC_FV00_1-hour-avg.nc 
+wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus2"0000Z_NEWC_FV00_1-hour-avg.nc 
 cd ..
 
 cd COFH
 rm *.nc
 wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthour"3000Z_COF_FV00_1-hour-avg.nc 
+wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus1"3000Z_COF_FV00_1-hour-avg.nc 
+wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus2"3000Z_COF_FV00_1-hour-avg.nc 
 cd ..
 
 cd ../..
