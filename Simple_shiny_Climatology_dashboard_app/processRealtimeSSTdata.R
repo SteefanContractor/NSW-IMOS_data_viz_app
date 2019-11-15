@@ -6,7 +6,8 @@ library(lubridate)
 library(dplyr)
 library(raster) #
 library(leaflet)
-library(htmlwidgets)
+library(htmltools) # not on server
+library(htmlwidgets) # not on server
 
 # working directory is where the script is
 basePath <- "./"
@@ -65,10 +66,11 @@ save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePa
 ##########################
 
 # NEWC
-fname <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx("*.nc"))
+fnames <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx("*.nc"))
 
-if (length(fname) > 0) {
-  nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fname))
+if (length(fnames) > 0) {
+  # first hour (latest hour minus 2)
+  nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[1]))
   ucur_newc <- ncvar_get(nc, "UCUR")
   vcur_newc <- ncvar_get(nc, "VCUR")
   lat <- ncvar_get(nc, "LATITUDE")
@@ -83,21 +85,68 @@ if (length(fname) > 0) {
   vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 0.1 # scaling factor for arrows
+  w = 1 # scaling factor for arrows
   uv_cart_df_newc <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_newc)*w, lat1 = lonlat[,2]+c(vcur_newc)*w)
   uv_cart_df_newc <- uv_cart_df_newc %>% filter(!is.na(lon1))
+  
+  # second hour (latest hour minus 1)
+  nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[2]))
+  ucur_newc <- ncvar_get(nc, "UCUR")
+  vcur_newc <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  lat <- apply(lat, 2, mean)
+  lon <- apply(lon, 1, mean)
+  ucur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(vcur_newc)))] <- NA
+  vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 1 # scaling factor for arrows
+  uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_newc)*w, vcur = c(vcur_newc)*w)
+  uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
+  
+  uv_cart_df_newc <- merge(uv_cart_df_newc, uv_cart_df, by=c("lon0", "lat0"))
+  uv_cart_df_newc <- uv_cart_df_newc %>% mutate(lon2 = lon1 + ucur, lat2 = lat1 + vcur) %>% dplyr::select(-ucur, -vcur)
+  
+  # latest hour
+  nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[3]))
+  ucur_newc <- ncvar_get(nc, "UCUR")
+  vcur_newc <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  lat <- apply(lat, 2, mean)
+  lon <- apply(lon, 1, mean)
+  ucur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(vcur_newc)))] <- NA
+  vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 1 # scaling factor for arrows
+  uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_newc)*w, vcur = c(vcur_newc)*w)
+  uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
+  
+  uv_cart_df_newc <- merge(uv_cart_df_newc, uv_cart_df, by=c("lon0", "lat0"))
+  uv_cart_df_newc <- uv_cart_df_newc %>% mutate(lon3 = lon2 + ucur, lat3 = lat2 + vcur) %>% dplyr::select(-ucur, -vcur)
 } else {
   ucur_newc <- c()
   vcur_newc <- c()
-  uv_cart_df_newc <- setNames(data.frame(matrix(ncol = 4, nrow = 0)), c("lon0", "lat0", "lon1", "lat1"))
+  uv_cart_df_newc <- setNames(data.frame(matrix(ncol = 8, nrow = 0)), c("lon0", "lat0", "lon1", "lat1", "lon2", "lat2","lon3", "lat3"))
 }
 # save(ucur_newc, vcur_newc, uv_cart_df_newc, file = paste0(basePath, "data/HFRadar/NEWC/NEWC_HFRadar.RData"))
 
 # COFH
-fname <- list.files(paste0(basePath, "data/HFRadar/COFH"), pattern = glob2rx("*.nc"))
+fnames <- list.files(paste0(basePath, "data/HFRadar/COFH"), pattern = glob2rx("*.nc"))
 
-if (length(fname) > 0) {
-  nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fname))
+if (length(fnames) > 0) {
+  # first hour (latest hour minus 2)
+  nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[1]))
   ucur_cofh <- ncvar_get(nc, "UCUR")
   vcur_cofh <- ncvar_get(nc, "VCUR")
   lat <- ncvar_get(nc, "LATITUDE")
@@ -112,9 +161,55 @@ if (length(fname) > 0) {
   vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 0.1 # scaling factor for arrows
+  w = 1 # scaling factor for arrows
   uv_cart_df_cofh <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_cofh)*w, lat1 = lonlat[,2]+c(vcur_cofh)*w)
   uv_cart_df_cofh <- uv_cart_df_cofh %>% filter(!is.na(lon1))
+  
+  # second hour (latest hour minus 1)
+  nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[2]))
+  ucur_cofh <- ncvar_get(nc, "UCUR")
+  vcur_cofh <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  # lat <- apply(lat, 2, mean)
+  # lon <- apply(lon, 1, mean)
+  ucur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(vcur_cofh)))] <- NA
+  vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 1 # scaling factor for arrows
+  uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_cofh)*w, vcur = c(vcur_cofh)*w)
+  uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
+  
+  uv_cart_df_cofh <- merge(uv_cart_df_cofh, uv_cart_df, by=c("lon0", "lat0"))
+  uv_cart_df_cofh <- uv_cart_df_cofh %>% mutate(lon2 = lon1 + ucur, lat2 = lat1 + vcur) %>% dplyr::select(-ucur, -vcur)
+  
+  # latest hour
+  nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[3]))
+  ucur_cofh <- ncvar_get(nc, "UCUR")
+  vcur_cofh <- ncvar_get(nc, "VCUR")
+  lat <- ncvar_get(nc, "LATITUDE")
+  lon <- ncvar_get(nc, "LONGITUDE")
+  ucur_qc <- ncvar_get(nc, "UCUR_quality_control")
+  vcur_qc <- ncvar_get(nc, "VCUR_quality_control")
+  nc_close(nc)
+  
+  # lat <- apply(lat, 2, mean)
+  # lon <- apply(lon, 1, mean)
+  ucur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(vcur_cofh)))] <- NA
+  vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
+  
+  lonlat <- expand.grid(lon, lat)
+  w = 1 # scaling factor for arrows
+  uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_cofh)*w, vcur = c(vcur_cofh)*w)
+  uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
+  
+  uv_cart_df_cofh <- merge(uv_cart_df_cofh, uv_cart_df, by=c("lon0", "lat0"))
+  uv_cart_df_cofh <- uv_cart_df_cofh %>% mutate(lon3 = lon2 + ucur, lat3 = lat2 + vcur) %>% dplyr::select(-ucur, -vcur)
 } else {
   ucur_cofh <- c()
   vcur_cofh <- c()
@@ -137,6 +232,19 @@ pal <- colorNumeric(
   palette = "magma",
   domain = values(sst),
   na.color = "#00000000")
+
+# load javascript plugin 
+curveplugin <- htmlDependency("leaflet.curve", "0.5.2",
+                              src = file.path(basePath),
+                              script = "leaflet.curve.js")
+
+# A function that takes a plugin htmlDependency object and adds
+# it to the map. This ensures that however or whenever the map
+# gets rendered, the plugin will be loaded into the browser.
+registerPlugin <- function(map, plugin) {
+  map$dependencies <- c(map$dependencies, list(plugin))
+  map
+}
 
 m <- leaflet() %>% addTiles()
 
@@ -179,9 +287,22 @@ addLayersControl(
   position = "topleft"
 )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
 
+m <- m %>% # Register ESRI plugin on this map instance
+  registerPlugin(curveplugin) %>%
+  # Add your custom JS logic here. The `this` keyword
+  # refers to the Leaflet (JS) map object.
+  onRender(paste("function(el, x) {",
+                 paste0("L.curve(['M', [", uv_cart_df$lat0, ",", uv_cart_df$lon0, 
+                        "], 'C', [", uv_cart_df$lat1, ",", uv_cart_df$lon1, "], [", 
+                        uv_cart_df$lat2, ",", uv_cart_df$lon2[], "], [",
+                        uv_cart_df$lat3, ",", uv_cart_df$lon3[], "]], ",
+                        "{weight: 2, color: 'darkblue', animate: {duration: 1500, iterations: Infinity}}).addTo(this);", sep = " ", collapse = "\n"),
+                 "}",sep = "\n"))
+
 # save leaflet map as html widget
 system("if [ ! -d www/figures ]; then mkdir www/figures; fi")
 # system("if [ ! -d www/figures/libdir ]; then mkdir www/figures/libdir; fi")
 f <- "www/figures/home_leaflet_map.html"
 saveWidget(m, file=file.path(normalizePath(dirname(f)),basename(f)), libdir = "libdir",
            selfcontained = F)
+
