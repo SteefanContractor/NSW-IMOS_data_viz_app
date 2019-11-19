@@ -14,7 +14,7 @@ library(leaflet.minicharts)
 local = system("uname -n", intern = T) == "MacBook-Pro-98.local" | system("uname -n", intern = T) == "matht250"#T
 
 if (local) {
-  basePath <- "~/Documents/GIT_REPOS/NSW-IMOS_data_viz_app/Simple_shiny_Climatology_dashboard_app/data/"#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
+  basePath <- paste0(normalizePath("./data/"),"/")#"~/ownCloud/Working_Directory/Postdoc-SchoolOfMathsStats/Scripts/Simple_shiny_Climatology_dashboard_app/data/"
   #"~/sci-maths-ocean/shared/PEOPLE/Steefan/climatology/data/"
 } else {
   basePath <- "/srv/shiny-server/data/"
