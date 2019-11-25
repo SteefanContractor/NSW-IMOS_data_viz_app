@@ -10,56 +10,78 @@ library(htmltools) # not on server
 library(htmlwidgets) # not on server
 
 # working directory is where the script is
-basePath <- "./"
-
-files <- list.files(paste0(basePath,"data/SST/"), pattern = glob2rx("*.nc"))
-date_times <- ymd_hms(substr(files, 1,14))
-df <- data.frame(date_time = date_times, filename = files)
-df <- arrange(df, desc(date_time))
-
-# read in first nc
-nc <- nc_open(paste0(basePath,"data/SST/",df$filename[1]))
-lon <- ncvar_get(nc, "lon")
-lat <- rev(ncvar_get(nc, "lat"))
-qflag <- ncvar_get(nc, "quality_level")
-sst <- ncvar_get(nc, "sea_surface_temperature")
-sst[which(qflag < 4)] <- NA
-nc_close(nc)
-
-# Now systematically go through previous sst fields and fill in gaps
-for (t in 6:48){
-  # t = 5
-  nc <- nc_open(paste0(basePath,"data/SST/",df$filename[t]))
-  qflag_prev <- ncvar_get(nc, "quality_level")
-  sst_prev <- ncvar_get(nc, "sea_surface_temperature")
-  sst_prev[which(qflag_prev < 4)] <- NA
-  nc_close(nc)
-  sst[which(is.na(sst) & qflag_prev >= 4)] <- sst_prev[which(is.na(sst) & qflag_prev >= 4)]
-}
-# convert to raster
-sst <- sst - 273.15
-sst <- raster(t(sst), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-              crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+basePath <- paste0(normalizePath("./"),"/")
 
 # 90th percentile
-clim_90 <- brick("./data/SSTAARS_nsw_narrow.nc", varname = "TEMP_90th_perc")
-clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw_narrow.nc", intern = T), split = "  ")[[1]][-1]))
-clim.index <- which.min(abs(yday(format(df[1,'date_time'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
+clim_90 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_90th_perc")
+clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
+clim.index <- which.min(abs(yday(format(df[1,'date'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
 # 10th percentile
-clim_10 <- brick("./data/SSTAARS_nsw_narrow.nc", varname = "TEMP_10th_perc")
-clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_nsw_narrow.nc", intern = T), split = "  ")[[1]][-1]))
+clim_10 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_10th_perc")
+clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
 
-sst_90 <- sst
-sst_90[which(sst_90[] < clim_90[[clim.index]][])] <- NA
-sst_10 <- sst
-sst_10[which(sst_10[] > clim_10[[clim.index]][])] <- NA
+##############################################################################
+# Read and process entire month of ocean colour and sst data
+##############################################################################
 
-sst_normal <- sst
-sst_normal[which(sst_normal[] > clim_90[[clim.index]][])] <- NA
-sst_normal[which(sst_normal[] < clim_10[[clim.index]][])] <- NA
+#sst
+files <- list.files(paste0(basePath,"data/SST/"), pattern = glob2rx("*.nc"))
+dates <- ymd(substr(files, 1,8))
+df <- data.frame(date = dates, filename = files)
+df <- arrange(df, desc(date))
+
+#oc
+files <- list.files(paste0(basePath,"data/CHL_OC3/"), pattern = glob2rx("*.nc"))
+dates <- ymd(substr(files, 7,7+8-1))
+df_OC <- data.frame(date = dates, OC_filename = files)
+df_OC <- arrange(df_OC, desc(date))
+
+# merge with SST dataframe
+df <- base::merge(df, df_OC, by = "date", all.x = T)
+
+# Read and process every file in df
+sst_month <- sapply(paste(df$date),function(x) NULL)
+sst_10_month <- sapply(paste(df$date),function(x) NULL)
+sst_90_month <- sapply(paste(df$date),function(x) NULL)
+oc_month <- sapply(paste(df$date),function(x) NULL)
+
+for (d in 1:nrow(df)) {
+  # sst
+  nc <- nc_open(paste0(basePath,"data/SST/",df$filename[d]))
+  lon <- ncvar_get(nc, "lon")
+  lat <- rev(ncvar_get(nc, "lat"))
+  sst <- ncvar_get(nc, "analysed_sst")
+  nc_close(nc)
+  
+  # convert to raster
+  sst <- sst - 273.15
+  sst <- raster(t(sst[,length(lat):1]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
+                crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  
+  sst_90 <- sst
+  sst_90[which(sst_90[] < clim_90[[clim.index]][])] <- NA
+  sst_10 <- sst
+  sst_10[which(sst_10[] > clim_10[[clim.index]][])] <- NA
+  
+  sst_month[[d]] <- sst
+  sst_10_month[[d]] <- sst_10
+  sst_90_month[[d]] <- sst_90
+  
+  # chl_oc3
+  nc <- nc_open(paste0(basePath,"data/CHL_OC3/",tail(df$OC_filename[!is.na(df$OC_filename)],1)))
+  lon <- ncvar_get(nc, "longitude")
+  lat <- rev(ncvar_get(nc, "latitude"))
+  chl_oc3 <- ncvar_get(nc, "chl_oc3")
+  nc_close(nc)
+  
+  chl_oc3 <- raster(t(chl_oc3), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
+                    crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  
+  oc_month[[d]] <- chl_oc3
+}
 
 # save data
-save(sst, sst_10, sst_90, sst_normal, clim_90, clim_10, df, file = paste0(basePath,"data/SST/latestSST.Rdata"))
+save(sst_month, sst_10_month, sst_90_month, oc_month, clim_90, clim_10, df, file = paste0(basePath,"data/SST/processedSSTandOC.Rdata"))
 
 ##########################
 # HF Radar data
@@ -304,5 +326,5 @@ system("if [ ! -d www/figures ]; then mkdir www/figures; fi")
 # system("if [ ! -d www/figures/libdir ]; then mkdir www/figures/libdir; fi")
 f <- "www/figures/home_leaflet_map.html"
 saveWidget(m, file=file.path(normalizePath(dirname(f)),basename(f)), libdir = "libdir",
-           selfcontained = F)
+           selfcontained = T)
 
