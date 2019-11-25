@@ -91,7 +91,7 @@ if [ -s newfiles.txt ]; then
 	for f in `cat newfiles.txt`; do
 		fname="${f%.*}"
 		cdo sellonlatbox,149.5,155.5,-28,-37.5 "$f" "$fname"_Aus-NSW.nc
-		cdo copy "$fname"_Aus-NSW.nc "$f"
+		cdo remapcon2,SSTgrid.des "$fname"_Aus-NSW.nc "$f"
 		rm "$fname"_Aus-NSW.nc
 	done
 fi
