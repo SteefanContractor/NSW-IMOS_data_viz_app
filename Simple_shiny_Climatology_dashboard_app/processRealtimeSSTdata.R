@@ -161,7 +161,7 @@ if (length(fnames) > 0) {
   vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 1 # scaling factor for arrows
+  w = 0.11 # scaling factor for arrows
   uv_cart_df_cofh <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_cofh)*w, lat1 = lonlat[,2]+c(vcur_cofh)*w)
   uv_cart_df_cofh <- uv_cart_df_cofh %>% filter(!is.na(lon1))
   
@@ -181,7 +181,7 @@ if (length(fnames) > 0) {
   vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 1 # scaling factor for arrows
+  w = 0.11 # scaling factor for arrows
   uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_cofh)*w, vcur = c(vcur_cofh)*w)
   uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
   
@@ -204,7 +204,7 @@ if (length(fnames) > 0) {
   vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
   
   lonlat <- expand.grid(lon, lat)
-  w = 1 # scaling factor for arrows
+  w = 0.11 # scaling factor for arrows
   uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_cofh)*w, vcur = c(vcur_cofh)*w)
   uv_cart_df <- uv_cart_df %>% filter(!is.na(ucur))
   
@@ -235,7 +235,7 @@ pal <- colorNumeric(
 
 # load javascript plugin 
 curveplugin <- htmlDependency("leaflet.curve", "0.5.2",
-                              src = file.path(basePath),
+                              src = file.path(normalizePath(basePath)),
                               script = "leaflet.curve.js")
 
 # A function that takes a plugin htmlDependency object and adds
@@ -246,7 +246,7 @@ registerPlugin <- function(map, plugin) {
   map
 }
 
-m <- leaflet() %>% addTiles()
+m <- leaflet() %>% addTiles() #%>% setView(lng = 153.4, lat = -30.5, zoom = 9)
 
 m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
   addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
@@ -296,7 +296,7 @@ m <- m %>% # Register ESRI plugin on this map instance
                         "], 'C', [", uv_cart_df$lat1, ",", uv_cart_df$lon1, "], [", 
                         uv_cart_df$lat2, ",", uv_cart_df$lon2[], "], [",
                         uv_cart_df$lat3, ",", uv_cart_df$lon3[], "]], ",
-                        "{weight: 2, color: 'darkblue', animate: {duration: 1500, iterations: Infinity}}).addTo(this);", sep = " ", collapse = "\n"),
+                        "{weight: 0.5, color: 'white', animate: {duration: 1500, iterations: Infinity}}).addTo(this);", sep = " ", collapse = "\n"),
                  "}",sep = "\n"))
 
 # save leaflet map as html widget
