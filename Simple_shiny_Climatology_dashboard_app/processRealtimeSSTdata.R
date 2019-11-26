@@ -68,16 +68,21 @@ for (d in 1:nrow(df)) {
   sst_90_month[[d]] <- sst_90
   
   # chl_oc3
-  nc <- nc_open(paste0(basePath,"data/CHL_OC3/",tail(df$OC_filename[!is.na(df$OC_filename)],1)))
-  lon <- ncvar_get(nc, "longitude")
-  lat <- rev(ncvar_get(nc, "latitude"))
-  chl_oc3 <- ncvar_get(nc, "chl_oc3")
-  nc_close(nc)
-  
-  chl_oc3 <- raster(t(chl_oc3), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
-                    crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-  
-  oc_month[[d]] <- chl_oc3
+  if (!is.na(df$OC_filename[d])) {
+    nc <- nc_open(paste0(basePath,"data/CHL_OC3/",df$OC_filename[d]))
+    dimnames <- names(nc$dim)
+    lon <- ncvar_get(nc, ifelse("longitude" %in% dimnames, "longitude", "lon"))
+    lat <- rev(ncvar_get(nc, ifelse("latitude" %in% dimnames, "latitude", "lat")))
+    chl_oc3 <- ncvar_get(nc, "chl_oc3")
+    nc_close(nc)
+    
+    chl_oc3 <- raster(t(chl_oc3), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
+                      crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    
+    oc_month[[d]] <- chl_oc3
+  } else {
+    oc_month[[d]] <- NA
+  }
 }
 
 # save data
