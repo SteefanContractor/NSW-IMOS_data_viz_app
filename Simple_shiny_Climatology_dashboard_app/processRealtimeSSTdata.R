@@ -76,7 +76,7 @@ for (d in 1:nrow(df)) {
     chl_oc3 <- ncvar_get(nc, "chl_oc3")
     nc_close(nc)
     
-    chl_oc3 <- raster(t(chl_oc3), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
+    chl_oc3 <- raster(t(chl_oc3[,length(lat):1]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
                       crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     
     oc_month[[d]] <- chl_oc3
@@ -254,11 +254,26 @@ save(ucur, vcur, uv_cart_df, file = paste0(basePath, "data/HFRadar/HFRadar.RData
 
 # create leaflet map
 
+n <- 27
+date <- df$date[n]
+sst <- sst_month[[n]]
+sst_10 <- sst_10_month[[n]]
+sst_90 <- sst_90_month[[n]]
+oc <- oc_month[[n]]
+
 # determine colourmapping for sst raster image
 pal <- colorNumeric(
   palette = "magma",
   domain = values(sst),
-  na.color = "#00000000")
+  na.color = "#00000000",
+  reverse = F)
+
+# determine colourmapping for sst raster image
+palOC <- colorNumeric(
+  palette = "viridis",
+  domain = log(values(oc)),
+  na.color = "transparent",
+  reverse = F)
 
 # load javascript plugin 
 curveplugin <- htmlDependency("leaflet.curve", "0.5.2",
@@ -275,13 +290,16 @@ registerPlugin <- function(map, plugin) {
 
 m <- leaflet() %>% addTiles()
 
-m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
-  addLegend(pal = pal, values = rev(values(sst)), opacity = 0.7,
-            title = "Surface temp", group = "SST", position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
+ m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
+  addLegend(pal = pal, values = values(sst), opacity = 0.7, #labFormat = labelFormat(transform = function(x) {sort(x, decreasing = T)}),
+            title = "Surface temp", group = c("SST"), position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
   addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
   addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
-  addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Time of Latest SST data:<br>",df[1,1])),
+  addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Date:<br>",date)),
                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) %>%
+  addRasterImage(x = log(oc), colors = palOC, group = "Ocean Colour", opacity = 0.8) %>%
+  addLegend(pal = palOC, values = rev(log(values(oc))), labFormat = labelFormat(transform = exp), opacity = 0.7,
+            title = "Ocean colour \n(Chl-a)", group = "Ocean Colour", position = "topleft",) %>% 
   # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon,
   #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
   #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
@@ -308,9 +326,9 @@ m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>
 #
 # Layers control
 addLayersControl(
-  baseGroups = c("SST", "Cold SSTs", "Warm SSTs"),
-  # overlayGroups = c("NEWC_HFRadar"),
-  options = layersControlOptions(collapsed = FALSE),
+  baseGroups = c("SST", "Cold SSTs", "Warm SSTs", "Ocean Colour"),
+  # overlayGroups = c("SST", "Ocean Colour"),
+  options = layersControlOptions(collapsed = FALSE, autoZIndex = T),
   position = "topleft"
 )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
 
