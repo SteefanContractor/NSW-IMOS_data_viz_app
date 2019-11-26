@@ -268,7 +268,7 @@ pal <- colorNumeric(
   na.color = "#00000000",
   reverse = F)
 
-# determine colourmapping for sst raster image
+# determine colourmapping for oc raster image
 palOC <- colorNumeric(
   palette = "viridis",
   domain = log(values(oc)),
