@@ -116,18 +116,30 @@ cd HFRadar
 if [ ! -d NEWC ]; then mkdir NEWC; fi
 if [ ! -d COFH ]; then mkdir COFH; fi
 
+cp ../CHL_OC3/dates.txt ./
+
 cd NEWC
 rm *.nc
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesttime"Z_NEWC_FV00_1-hour-avg.nc 
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus1"0000Z_NEWC_FV00_1-hour-avg.nc 
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus2"0000Z_NEWC_FV00_1-hour-avg.nc 
+for d in `cat ../dates.txt`; do 
+  year=`echo "$d" | cut -c1-4`
+  month=`echo "$d" | cut -c5-6`
+  day=`echo "$d" | cut -c7-8`
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T150000Z_NEWC_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T120000Z_NEWC_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T090000Z_NEWC_FV00_1-hour-avg.nc 
+done
 cd ..
 
 cd COFH
 rm *.nc
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthour"3000Z_COF_FV00_1-hour-avg.nc 
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus1"3000Z_COF_FV00_1-hour-avg.nc 
-wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$latestdate"T"$latesthourminus2"3000Z_COF_FV00_1-hour-avg.nc 
+for d in `cat ../dates.txt`; do 
+  year=`echo "$d" | cut -c1-4`
+  month=`echo "$d" | cut -c5-6`
+  day=`echo "$d" | cut -c7-8`
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T153000Z_COF_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T123000Z_COF_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T093000Z_COF_FV00_1-hour-avg.nc 
+done
 cd ..
 
 cd ../..
