@@ -106,7 +106,7 @@ ui <-
                          # ),
                          # htmlOutput("homeframe"),
                          dateInput("date", "Date", min = min(df$date), max = max(df$date), value = max(df$date), width = "100"),
-                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 600))),
+                         fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 700))),
                          # div(style="padding-left: 10px", absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                          #               draggable = TRUE, top = 580, left = "auto", width = 100, 
                                        # div(style = "padding-left: 5px", checkboxInput(inputId = "HFRadar_checkbox",label = "HF Radar", value = T)))),
@@ -318,15 +318,15 @@ server <- function(input, output){
       domain = values(sst),
       na.color = "#00000000")
 
-    m <- leaflet() %>% addTiles()
+    m <- leaflet() %>% addTiles() %>% setView(lng = 153.5, lat = -32.5, zoom = 7)
 
     m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
       addLegend(pal = pal, values = values(sst), opacity = 0.7, #labFormat = labelFormat(transform = function(x) {sort(x, decreasing = T)}),
                 title = "Surface temp", group = c("SST"), position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
       addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
-      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
-      addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Date:<br>",date)),
-                          labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) #%>%
+      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) #%>%
+      # addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Date:<br>",date)),
+      #                     labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) #%>%
       # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon,
       #                                       label = HTML(paste(sep = "<br/>", stationLocs %>% dplyr::filter(site_code == "CH100") %>% dplyr::select(site_code), paste(round(rTemps[1],1), "degrees"))),
       #                                       labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px",
@@ -365,7 +365,7 @@ server <- function(input, output){
       }
     }
     
-    m %>%     
+    m <- m %>%     
       # Layers control
       addLayersControl(
         baseGroups = c("SST", "Cold SSTs", "Warm SSTs", "Ocean Colour"),
@@ -373,6 +373,32 @@ server <- function(input, output){
         options = layersControlOptions(collapsed = FALSE, autoZIndex = T),
         position = "topleft"
       )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+    
+    # load javascript plugin 
+    curveplugin <- htmlDependency("leaflet.curve", "0.5.2",
+                                  src = file.path(normalizePath("www")),
+                                  script = "leaflet.curve.js")
+    
+    # A function that takes a plugin htmlDependency object and adds
+    # it to the map. This ensures that however or whenever the map
+    # gets rendered, the plugin will be loaded into the browser.
+    registerPlugin <- function(map, plugin) {
+      map$dependencies <- c(map$dependencies, list(plugin))
+      map
+    }
+    
+    uv_cart_df <- UVCart_month[[n]]
+    m %>% # Register ESRI plugin on this map instance
+      registerPlugin(curveplugin) %>%
+      # Add your custom JS logic here. The `this` keyword
+      # refers to the Leaflet (JS) map object.
+      onRender(paste("function(el, x) {",
+                     paste0("L.curve(['M', [", uv_cart_df$lat0, ",", uv_cart_df$lon0, 
+                            "], 'C', [", uv_cart_df$lat1, ",", uv_cart_df$lon1, "], [", 
+                            uv_cart_df$lat2, ",", uv_cart_df$lon2[], "], [",
+                            uv_cart_df$lat3, ",", uv_cart_df$lon3[], "]], ",
+                            "{weight: 0.5, color: 'white', animate: {duration: 1500, iterations: Infinity}}).addTo(this);", sep = " ", collapse = "\n"),
+                     "}",sep = "\n"))
   })
   
   # observeEvent(input$HFRadar_checkbox, {
