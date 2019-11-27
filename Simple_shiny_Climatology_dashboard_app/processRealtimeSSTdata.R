@@ -12,14 +12,6 @@ library(htmlwidgets) # not on server
 # working directory is where the script is
 basePath <- paste0(normalizePath("./"),"/")
 
-# 90th percentile
-clim_90 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_90th_perc")
-clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
-clim.index <- which.min(abs(yday(format(df[1,'date'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
-# 10th percentile
-clim_10 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_10th_perc")
-clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
-
 ##############################################################################
 # Read and process entire month of ocean colour and sst data
 ##############################################################################
@@ -29,6 +21,15 @@ files <- list.files(paste0(basePath,"data/SST/"), pattern = glob2rx("*.nc"))
 dates <- ymd(substr(files, 1,8))
 df <- data.frame(date = dates, filename = files)
 df <- arrange(df, desc(date))
+
+# sst climatology
+# 90th percentile
+clim_90 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_90th_perc")
+clim_90 <- setZ(clim_90, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
+clim.index <- which.min(abs(yday(format(df[1,'date'], format = "%y-%m-%d")) - yday(getZ(clim_90))))
+# 10th percentile
+clim_10 <- brick("./data/SSTAARS_NSW_remapcon2.nc", varname = "TEMP_10th_perc")
+clim_10 <- setZ(clim_10, z = ymd(strsplit(system("cdo showdate data/SSTAARS_NSW_remapcon2.nc", intern = T), split = "  ")[[1]][-1]))
 
 #oc
 files <- list.files(paste0(basePath,"data/CHL_OC3/"), pattern = glob2rx("*.nc"))
