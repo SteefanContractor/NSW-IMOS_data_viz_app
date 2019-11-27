@@ -59,7 +59,7 @@ RUN sudo crontab /etc/cron.d/cron-job
 RUN sudo apt-get install -y libnetcdf-dev libudunits2-dev
 
 # install R packages
-RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet','raster','rgdal','leaflet.minicharts'))"
+RUN sudo R -e "install.packages(c('ncdf4','zoo','lubridate','readODS','plotly','shinydashboard','leaflet','raster','rgdal','leaflet.minicharts', 'htmltools', 'htmlwidgets'))"
 
 # copy preprocessing scripts
 COPY Simple_shiny_Climatology_dashboard_app/preprocessing.R /srv/shiny-server/
