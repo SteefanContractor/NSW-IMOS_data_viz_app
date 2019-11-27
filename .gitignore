@@ -3,3 +3,5 @@ Simple_shiny_Climatology_dashboard_app/data/CHL_OC3
 Simple_shiny_Climatology_dashboard_app/data/prerundata*.RData
 Simple_shiny_Climatology_dashboard_app/data/HFRadar
 Simple_shiny_Climatology_dashboard_app/rsconnect/
+.DS_Store
+.Rhistory
