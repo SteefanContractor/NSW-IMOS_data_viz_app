@@ -117,9 +117,18 @@ ui <-
                          #               draggable = TRUE, top = 580, left = "auto", width = 100, 
                                        # div(style = "padding-left: 5px", checkboxInput(inputId = "HFRadar_checkbox",label = "HF Radar", value = T)))),
                          helpText(HTML(paste(sep="</br>",
-                                             "<b>SST</b>: Hourly composites of Himawari-8 night-time skin temperature data in degrees celsius. Gaps filled with the last non-missing value in the last 48h",
+                                             "<strong>Description of data:</strong>",
+                                             "<b>SST</b>: The Regional Australian Multi-Sensor SST Analysis (RAMSSA) v1.0 L4 SST product produced by the Australian Bureau of Meteorology (BOM) by optimally blending infrared and microwave SST data 
+                                             from various satellites, with in situ SST data from ships, drifters and moorings. The SST data represents daily foundation temperatures free from diurnal warming. More information <a href='https://researchdata.ands.org.au/imos-srs-sst-ramssa-australia/1431818'>here</a>",
                                              "<b> Cold and Warm SSTs</b>: Cold (warm) SSTs are cooler (hotter) than the 10<sup>th</sup> (90<sup>th</sup>) percentiles of the monthly SST climatology.",
-                                       "<b>SST Climatology</b>: SSTAARS (SST Atlas of Australian Regional Seas) climatology created by fitting four annual sinusoids (and a trend) to 25 years of daily, night-only AVHRR SST, L3S-1d, provided by the Bureau of Meteorology (BoM).")))
+                                             "<b>SST Climatology</b>: SSTAARS (SST Atlas of Australian Regional Seas) climatology created by fitting four annual sinusoids (and a trend) to 25 years of daily, night-only AVHRR SST, L3S-1d, provided by BOM.",
+                                             "<b>Ocean colour</b>: Chlorophyll-a concentration infered from sunlight reflected from within the ocean as measured by the MODIS sensor. The Chl-a inference is done using the OC3 algorithm, described 
+                                             <a href='http://oceancolor.gsfc.nasa.gov/cms/atbd/chlor_a'>here</a>. Data obtained from <a href='https://researchdata.ands.org.au/imos-srs-modis-oc3-model/961150'>here</a>.",
+                                             "<b>Ocean current velocities</b>: Represented by white animated bezier curves. Data obtained from the Coffs Harbour and Newcastle IMOS Australian Coastal Ocean Radar (ACORN) Facilities. Note that the curves represent 
+                                             ocean velocities (instead of actual location of the current). This is because the curves are scaled by an arbitrary scaling constant for easier visualisation. As such certain high velocity currents may go over land. 
+                                             Note also that due to its realtime nature the data ocean current data is not quality controlled. 
+                                             The curves represent the change in velocities between around 0900h, midday and afternoon for each day. Data can be downloaded <a href='http://thredds.aodn.org.au/thredds/catalog/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/catalog.html'>here</a>."
+                                       )))
                                   #      "Colour of the labels indicate whether temperatures today are anomalous. A green label indicates the current temperatures are within the 10<sup>th</sup>",
                                   # "and 90<sup>th</sup> percentiles of the climatology, a red label indicates the current temperatures are greater than the 90<sup>th</sup> percentile, and",
                                   # "a blue label indicates the current temperatures are less than the 10<sup>th</sup> percentile."))
