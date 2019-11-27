@@ -9,6 +9,8 @@ library(shiny)
 library(shinydashboard)
 library(leaflet)
 library(leaflet.minicharts)
+library(htmltools)
+library(htmlwidgets)
 
 # change local to True when developing locally
 local = system("uname -n", intern = T) == "MacBook-Pro-98.local" | system("uname -n", intern = T) == "matht250"#T
@@ -105,7 +107,11 @@ ui <-
                          #           color = "blue", fill = T)
                          # ),
                          # htmlOutput("homeframe"),
-                         dateInput("date", "Date", min = min(df$date), max = max(df$date), value = max(df$date), width = "100"),
+                         fluidRow(tags$div(class = "col-xs-1", align = "center", strong(h4("Date: "))),
+                                  tags$div(class = "col-xs-1", align = "center", tags$div(class = "col-xs-6", uiOutput("prevDate"))),
+                                  tags$div(class = "col-xs-2", align = "center", dateInput("date", NULL, min = min(df$date), max = max(df$date), 
+                                                                        value = max(df$date), width = "300") ),
+                                  tags$div(class = "col-xs-1", align = "center", tags$div(uiOutput("nextDate")))),
                          fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 700))),
                          # div(style="padding-left: 10px", absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                          #               draggable = TRUE, top = 580, left = "auto", width = 100, 
@@ -199,7 +205,31 @@ ui <-
 )
 
 
-server <- function(input, output){
+server <- function(input, output, session){
+  
+  observeEvent(input$prevDate, {
+    current <- input$date
+    if (current > min(df$date)) {
+      updateDateInput(session, "date", value = current - 1)
+    }
+  })
+  
+  observeEvent(input$nextDate, {
+    current <- input$date
+    if (current < max(df$date)) {
+      updateDateInput(session, "date", value = current + 1)
+    }
+  })
+  
+  output$prevDate <- renderUI({
+    actionButton("prevDate",
+                 label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-left'></i></span>"))
+  })
+  
+  output$nextDate <- renderUI({
+    actionButton("nextDate",
+                 label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-right'></i></span>"))
+  })
   
   output$clim_plot <- renderPlotly({
     pressure = input$Pressure
