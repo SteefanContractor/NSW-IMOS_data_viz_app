@@ -88,3 +88,5 @@ CMD sudo cron && sudo /usr/bin/shiny-server.sh
 # run as follows
 # docker run -p 80:3838 --rm -d unswoceanography/shiny-verse:1.0.0
 # docker exec -it 6bf /bin/bash
+# docker tag unswoceanography/webapp:1.3.1 unswoceanography/webapp:latest
+# docker push unswoceanography/webapp:latest
