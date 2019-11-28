@@ -108,10 +108,12 @@ ui <-
                          # ),
                          # htmlOutput("homeframe"),
                          fluidRow(tags$div(class = "col-xs-1", align = "center", strong(h4("Date: "))),
-                                  tags$div(class = "col-xs-1", align = "center", tags$div(class = "col-xs-6", uiOutput("prevDate"))),
-                                  tags$div(class = "col-xs-2", align = "center", dateInput("date", NULL, min = min(df$date), max = max(df$date), 
-                                                                        value = max(df$date), width = "300") ),
-                                  tags$div(class = "col-xs-1", align = "center", tags$div(uiOutput("nextDate")))),
+                                  tags$div(class = "col-xs-1", align = "center", style = "padding-right:0", actionButton("prevDate",
+                                                                                              label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-left'></i></span>"))),
+                                  tags$div(class = "col-xs-3", align = "center", style = "padding:0", dateInput("date", NULL, min = min(df$date), max = max(df$date), 
+                                                                        value = max(df$date), width = "100%") ),
+                                  tags$div(class = "col-xs-1", align = "left", style = "padding-left:0",actionButton("nextDate",
+                                                                                                       label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-right'></i></span>")))),
                          fluidRow(column(12, align = "center", leafletOutput("stationMap_Home", height = 700))),
                          # div(style="padding-left: 10px", absolutePanel(id = "controls", class = "panel panel-default", fixed = TRUE,
                          #               draggable = TRUE, top = 580, left = "auto", width = 100, 
@@ -228,16 +230,6 @@ server <- function(input, output, session){
     if (current < max(df$date)) {
       updateDateInput(session, "date", value = current + 1)
     }
-  })
-  
-  output$prevDate <- renderUI({
-    actionButton("prevDate",
-                 label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-left'></i></span>"))
-  })
-  
-  output$nextDate <- renderUI({
-    actionButton("nextDate",
-                 label = HTML("<span class='small'><i class='glyphicon glyphicon-arrow-right'></i></span>"))
   })
   
   output$clim_plot <- renderPlotly({
