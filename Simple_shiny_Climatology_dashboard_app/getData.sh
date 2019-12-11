@@ -125,7 +125,7 @@ for d in `cat ../dates.txt`; do
   month=`echo "$d" | cut -c5-6`
   day=`echo "$d" | cut -c7-8`
   wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T150000Z_NEWC_FV00_1-hour-avg.nc 
-  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T120000Z_NEWC_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T210000Z_NEWC_FV00_1-hour-avg.nc 
   wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/NEWC/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T090000Z_NEWC_FV00_1-hour-avg.nc 
 done
 cd ..
@@ -137,7 +137,7 @@ for d in `cat ../dates.txt`; do
   month=`echo "$d" | cut -c5-6`
   day=`echo "$d" | cut -c7-8`
   wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T153000Z_COF_FV00_1-hour-avg.nc 
-  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T123000Z_COF_FV00_1-hour-avg.nc 
+  wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T213000Z_COF_FV00_1-hour-avg.nc 
   wget -q -nc -A.nc http://thredds.aodn.org.au/thredds/fileServer/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/COF/"$year"/"$month"/"$day"/IMOS_ACORN_V_"$d"T093000Z_COF_FV00_1-hour-avg.nc 
 done
 cd ..

@@ -105,7 +105,7 @@ for (d in 1:nrow(df)) {
   fnames <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx(paste0("*",date,"*.nc")))
   
   if (length(fnames) > 2) {
-    # first hour (latest hour minus 2)
+    # 9 am 
     nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[1]))
     ucur_newc <- ncvar_get(nc, "UCUR")
     vcur_newc <- ncvar_get(nc, "VCUR")
@@ -125,7 +125,7 @@ for (d in 1:nrow(df)) {
     uv_cart_df_newc <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_newc)*w, lat1 = lonlat[,2]+c(vcur_newc)*w)
     uv_cart_df_newc <- uv_cart_df_newc %>% filter(!is.na(lon1))
     
-    # second hour (latest hour minus 1)
+    # 3 pm
     nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[2]))
     ucur_newc <- ncvar_get(nc, "UCUR")
     vcur_newc <- ncvar_get(nc, "VCUR")
@@ -148,7 +148,7 @@ for (d in 1:nrow(df)) {
     uv_cart_df_newc <- merge(uv_cart_df_newc, uv_cart_df, by=c("lon0", "lat0"))
     uv_cart_df_newc <- uv_cart_df_newc %>% mutate(lon2 = lon1 + ucur, lat2 = lat1 + vcur) %>% dplyr::select(-ucur, -vcur)
     
-    # latest hour
+    # 9 pm
     nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[3]))
     ucur_newc <- ncvar_get(nc, "UCUR")
     vcur_newc <- ncvar_get(nc, "VCUR")
@@ -181,7 +181,7 @@ for (d in 1:nrow(df)) {
   fnames <- list.files(paste0(basePath, "data/HFRadar/COFH"), pattern = glob2rx(paste0("*",date,"*.nc")))
   
   if (length(fnames) > 2) {
-    # first hour (latest hour minus 2)
+    # 9 am
     nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[1]))
     ucur_cofh <- ncvar_get(nc, "UCUR")
     vcur_cofh <- ncvar_get(nc, "VCUR")
@@ -201,7 +201,7 @@ for (d in 1:nrow(df)) {
     uv_cart_df_cofh <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], lon1 = lonlat[,1]+c(ucur_cofh)*w, lat1 = lonlat[,2]+c(vcur_cofh)*w)
     uv_cart_df_cofh <- uv_cart_df_cofh %>% filter(!is.na(lon1))
     
-    # second hour (latest hour minus 1)
+    # 3 pm
     nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[2]))
     ucur_cofh <- ncvar_get(nc, "UCUR")
     vcur_cofh <- ncvar_get(nc, "VCUR")
@@ -224,7 +224,7 @@ for (d in 1:nrow(df)) {
     uv_cart_df_cofh <- merge(uv_cart_df_cofh, uv_cart_df, by=c("lon0", "lat0"))
     uv_cart_df_cofh <- uv_cart_df_cofh %>% mutate(lon2 = lon1 + ucur, lat2 = lat1 + vcur) %>% dplyr::select(-ucur, -vcur)
     
-    # latest hour
+    # 9 pm
     nc <- nc_open(paste0(basePath, "data/HFRadar/COFH/", fnames[3]))
     ucur_cofh <- ncvar_get(nc, "UCUR")
     vcur_cofh <- ncvar_get(nc, "VCUR")
