@@ -80,6 +80,11 @@ for (d in 1:nrow(df)) {
     chl_oc3 <- raster(t(chl_oc3[,length(lat):1]), xmn=min(lon), xmx=max(lon), ymn=min(lat), ymx=max(lat), 
                       crs="+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
     
+    # Mask  values above 10
+    chl_oc3[which(values(chl_oc3) > 10)] <- NA
+    # Set values between >5 and 10 as 5
+    chl_oc3[which(values(chl_oc3) > 5)] <- 5
+    
     oc_month[[d]] <- chl_oc3
   } else {
     oc_month[[d]] <- NA
