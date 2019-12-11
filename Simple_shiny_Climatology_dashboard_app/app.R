@@ -92,6 +92,12 @@ ui <-
           });
         }
       ")),
+               tags$style("@keyframes dash {
+                 
+                 to {
+                   stroke-dashoffset: 100;
+                 }
+               }"),
                tabItems(
                  tabItem("Home",
                          titlePanel("At a glance"),
@@ -403,7 +409,13 @@ server <- function(input, output, session){
         # overlayGroups = c("SST", "Ocean Colour"),
         options = layersControlOptions(collapsed = FALSE, autoZIndex = T),
         position = "topleft"
-      )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+      ) %>% # %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
+      addControl('<svg height="10" width="50" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <line x1="0" y1="0" x2="100" y2="0" style="stroke:rgb(0,250,250);stroke-width:2;stroke-dasharray: 100;
+  stroke-dashoffset: 1000;
+  animation: dash 5s linear alternate infinite;" />
+</svg>') %>%
+      addScaleBar(options = scaleBarOptions(updateWhenIdle = F))
     
     # load javascript plugin 
     curveplugin <- htmlDependency("leaflet.curve", "0.5.2",
