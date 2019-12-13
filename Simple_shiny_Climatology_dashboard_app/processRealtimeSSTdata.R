@@ -261,6 +261,15 @@ for (d in 1:nrow(df)) {
 save(UVCart_month, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
 
 ##################################
+# 200m isobath from gebco (https://download.gebco.net/)
+##################################
+topo <- raster(file.path(basePath, "data", "gebco_2019_n-28.0_s-37.5_w149.5_e155.5.nc"))
+topo[which(values(topo) > -200)] <- 0
+topo[which(values(topo) < -200)] <- 1
+isobath_200 <- rasterToContour(topo)
+save(isobath_200, file = file.path(basePath, "data/isobath_200.RData"))
+
+##################################
 # save leaflet map on home page as html widget
 ##################################
 

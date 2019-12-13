@@ -26,6 +26,7 @@ prerundata.file <- sort(list.files(basePath, pattern = glob2rx("prerundata_*.RDa
 load(paste0(basePath, prerundata.file))
 load(paste0(basePath, "SST/processedSSTandOC.Rdata"))
 load(paste0(basePath, "HFRadar/HFRadar.RData"))
+load(paste0(basePath, "isobath_200.RData"))
 
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
@@ -350,13 +351,15 @@ server <- function(input, output, session){
       domain = values(sst),
       na.color = "#00000000")
 
-    m <- leaflet() %>% addTiles() %>% setView(lng = 153.5, lat = -32.5, zoom = 7)
+    m <- leaflet(isobath_200) %>% addTiles() %>% setView(lng = 153.5, lat = -32.5, zoom = 7)
 
     m <- m %>% addRasterImage(x = sst, colors = pal, group = "SST",opacity = 0.8) %>%
       addLegend(pal = pal, values = values(sst), opacity = 0.7, #labFormat = labelFormat(transform = function(x) {sort(x, decreasing = T)}),
                 title = "Surface temp", group = c("SST"), position = "topleft") %>% #, labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE))
       addRasterImage(x = sst_10, colors = pal, group = "Cold SSTs", opacity = 0.8) %>%
-      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) #%>%
+      addRasterImage(x = sst_90, colors = pal, group = "Warm SSTs", opacity = 0.8) %>%
+      addPolylines(color = "grey", group = "200m isobath", weight = 1, label = "200m isobath")
+      # addRasterImage(topo, colors = "black", group = "200m isobath")
       # addLabelOnlyMarkers(lng = 151.4, lat = -27.9, label = HTML(paste("Date:<br>",date)),
       #                     labelOptions = labelOptions(noHide = T, direction = "bottom", textsize = "15px")) #%>%
       # addMarkers(data = stationLocs %>% filter(site_code == "CH100"), lat = ~avg_lat, lng = ~avg_lon,
@@ -401,7 +404,7 @@ server <- function(input, output, session){
       # Layers control
       addLayersControl(
         baseGroups = c("SST", "Cold SSTs", "Warm SSTs", "Ocean Colour"),
-        # overlayGroups = c("SST", "Ocean Colour"),
+        overlayGroups = c("200m isobath"),
         options = layersControlOptions(collapsed = FALSE, autoZIndex = T),
         position = "topleft"
       )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
