@@ -125,14 +125,23 @@ ui <-
                                              from various satellites, with in situ SST data from ships, drifters and moorings. The SST data represents daily foundation temperatures free from diurnal warming. More information <a href='https://researchdata.ands.org.au/imos-srs-sst-ramssa-australia/1431818'>here</a>",
                                              "<b> Cold and Warm SSTs</b>: Cold (warm) SSTs are cooler (hotter) than the 10<sup>th</sup> (90<sup>th</sup>) percentiles of the monthly SST climatology.",
                                              "<b>SST Climatology</b>: SSTAARS (SST Atlas of Australian Regional Seas) climatology created by fitting four annual sinusoids (and a trend) to 25 years of daily, night-only AVHRR SST, L3S-1d, provided by BOM.",
-                                             "<b>Ocean colour</b>: Chlorophyll-a concentration infered from sunlight reflected from within the ocean as measured by the MODIS sensor. The Chl-a inference is done using the OC3 algorithm, described 
-                                             <a href='http://oceancolor.gsfc.nasa.gov/cms/atbd/chlor_a'>here</a>. Data obtained from <a href='https://researchdata.ands.org.au/imos-srs-modis-oc3-model/961150'>here</a>.",
+                                             "<b>Ocean colour</b>: Chlorophyll-a concentration in mg/m<sup>3</sup> infered from sunlight reflected from within the ocean as measured by the MODIS sensor. The Chl-a inference is done using the OC3 algorithm, described 
+                                             <a href='http://oceancolor.gsfc.nasa.gov/cms/atbd/chlor_a'>here</a>. Values above 10 mg/m<sup>3</sup> have been masked. Data obtained from <a href='https://researchdata.ands.org.au/imos-srs-modis-oc3-model/961150'>here</a>.",
                                              "<b>Ocean current velocities</b>: Represented by white animated bezier curves. Data obtained from the Coffs Harbour and Newcastle IMOS Australian Coastal Ocean Radar (ACORN) Facilities. Note that the curves represent 
                                              ocean velocities (instead of actual location of the current). This is because the curves are scaled by an arbitrary scaling constant for easier visualisation. As such certain high velocity currents may go over land. Furthermore the direction of 
                                              the entire bezier curve (start to end) represents the direction of the current at the location at the start of the bezier curve.
                                              Note also that due to its realtime nature the data ocean current data is not quality controlled. 
-                                             The curves represent the change in velocities between around 0900h, 3pm and 9pm UTC time for each day. Data can be downloaded <a href='http://thredds.aodn.org.au/thredds/catalog/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/catalog.html'>here</a>."
-                                       )))
+                                             The curves represent the change in velocities between around 0900h, 3pm and 9pm UTC time for each day. Data can be downloaded <a href='http://thredds.aodn.org.au/thredds/catalog/IMOS/ACORN/gridded_1h-avg-current-map_non-QC/catalog.html'>here</a>.",
+                                             "<b>200m Isobath</b>: Line representing the location of ocean floor at a depth of 200m. Ocean bathymetry data obtained from General Bathymetry Chart of the Oceans (GEBCO) 2019 grid (downloaded from <a href='https://download.gebco.net/'>here</a>). DOI: 10.5285/836f016a-33be-6ddc-e053-6c86abc0788e"
+                                       ))),
+                         fluidRow(tags$div(HTML('<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" rel="dct:type">work</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.'), style = "background: #1e282c; color:white; text-align:left; padding: 10px; font-size: small"),
+                                  tags$div(tags$a(href="http://oceanography.unsw.edu.au/", tags$img(src="images/UNSW_logo.png", height = "80", style ="padding: 10px;")),
+                                           tags$a(href="https://www.sims.org.au/", tags$img(src="images/sims-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://www.cmsi.unsw.edu.au/", tags$img(src="images/CMSI-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="http://imos.org.au/", tags$img(src="images/imos-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://portal.aodn.org.au/", tags$img(src="images/AODN-logo.png", height = "80", style ="padding: 10px")),
+                                           style = "background: #66666a; color:white; text-align:center; font-size: small"))
+                                  # tags$a(tags$img(src="www/images/UNSW_logo.png", style="max-height: 180; width:auto; padding: 30;"), href="http://oceanography.unsw.edu.au/")
                                   #      "Colour of the labels indicate whether temperatures today are anomalous. A green label indicates the current temperatures are within the 10<sup>th</sup>",
                                   # "and 90<sup>th</sup> percentiles of the climatology, a red label indicates the current temperatures are greater than the 90<sup>th</sup> percentile, and",
                                   # "a blue label indicates the current temperatures are less than the 10<sup>th</sup> percentile."))
@@ -156,12 +165,20 @@ ui <-
                                           min = 1954, max = 2018,
                                           value = 1954, animate = animationOptions(interval = 500)),
                               helpText("TOP: Temperature Climatology: mean or median of all temperature observations for a day of the year over all available years (black solid line). The pink shaded region represents the region enclosed by the 90th percentile and the 10th percentile of the termperature observations. Solid circles plotted over the climatology represent the daily averages for a specified year. Black, red and blue fills represent temperatures within the 90th and 10th percentiles, temperatures higher than the 90th percentile, and temperatures lower than the 10th percentiles respectively.
-                                    BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years.")
+                                    BOTTOM: The total number of observations for each day of the year. These include observations from multiple data sources and over multiple years."),
+                              helpText(tags$b('Michael Hemming, Moninya Roughan, Amandine Schaeffer. “Subsurface Ocean Temperature Climatology: New Methodology for Multiple Data Sources" Frontiers in Marine Science (2019): (In Review).'))
                             ),
                             mainPanel(plotlyOutput(outputId = "clim_plot"),
                                       br(),
                                       plotlyOutput(outputId = "numObs_for_clim"))
-                          )
+                          ),
+                         fluidRow(tags$div(HTML('<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" rel="dct:type">work</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.'), style = "background: #1e282c; color:white; text-align:left; padding: 10px; font-size: small"),
+                                  tags$div(tags$a(href="http://oceanography.unsw.edu.au/", tags$img(src="images/UNSW_logo.png", height = "80", style ="padding: 10px;")),
+                                           tags$a(href="https://www.sims.org.au/", tags$img(src="images/sims-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://www.cmsi.unsw.edu.au/", tags$img(src="images/CMSI-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="http://imos.org.au/", tags$img(src="images/imos-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://portal.aodn.org.au/", tags$img(src="images/AODN-logo.png", height = "80", style ="padding: 10px")),
+                                           style = "background: #66666a; color:white; text-align:center; font-size: small"))
                  ),
                  tabItem("PH100_MHW",
                           sidebarLayout(
@@ -179,15 +196,22 @@ ui <-
                             ),
                             mainPanel(plotlyOutput(outputId = "num_MCW"),
                                       plotlyOutput(outputId = "num_complete_runs"))
-                          )
+                          ),
+                         tags$br(),
+                         fluidRow(tags$div(HTML('<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" rel="dct:type">work</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.'), style = "background: #1e282c; color:white; text-align:left; padding: 10px; font-size: small"),
+                                  tags$div(tags$a(href="http://oceanography.unsw.edu.au/", tags$img(src="images/UNSW_logo.png", height = "80", style ="padding: 10px;")),
+                                           tags$a(href="https://www.sims.org.au/", tags$img(src="images/sims-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://www.cmsi.unsw.edu.au/", tags$img(src="images/CMSI-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="http://imos.org.au/", tags$img(src="images/imos-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://portal.aodn.org.au/", tags$img(src="images/AODN-logo.png", height = "80", style ="padding: 10px")),
+                                           style = "background: #66666a; color:white; text-align:center; font-size: small"))
                  ),
                  tabItem("About",
                          verticalLayout(
                            # tags$head(HTML('<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true&callback=initMap"></script>
                            #                <script type="text/javascript" src="imos_map.js"></script>')),
                            #<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBERuc7VFPIDMhCoUTMcE-z59CvoIe5wlU&sensor=true"></script>,
-                           tags$body(onload="initialize()",
-                                     titlePanel("About"),
+                           tags$body(titlePanel("About"),
                                      p("The broad geographical reach of the East Australian Current (EAC) influences the climate and marine economies of nearly
                              half the Australian population, from Brisbane to Sydney, Melbourne, and Hobart. The poleward flowing EAC brings warm
                              water down the New South Wales (NSW) coast modulating the region’s climate as well as the composition, organisation and function
@@ -206,9 +230,17 @@ ui <-
                                              tags$li("To integrate the ecosystem response with oceanographic processes.")),
                                      h3("Moorings"),
                                      p("The following map shows the locations of all the moorings maintained by the NSW node of IMOS."),
-                                     leafletOutput("stationMap_About", height = 600))
+                                     leafletOutput("stationMap_About", height = 600)),
+                                    tags$br()
                            # HTML('<div id="map_canvas" style="margin-left:30px;width:90%; height:600px;">'))
-                         )
+                         ),
+                         fluidRow(tags$div(HTML('<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/InteractiveResource" rel="dct:type">work</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License</a>.'), style = "background: #1e282c; color:white; text-align:left; padding: 10px; font-size: small"),
+                                  tags$div(tags$a(href="http://oceanography.unsw.edu.au/", tags$img(src="images/UNSW_logo.png", height = "80", style ="padding: 10px;")),
+                                           tags$a(href="https://www.sims.org.au/", tags$img(src="images/sims-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://www.cmsi.unsw.edu.au/", tags$img(src="images/CMSI-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="http://imos.org.au/", tags$img(src="images/imos-logo.png", height = "80", style ="padding: 10px")),
+                                           tags$a(href="https://portal.aodn.org.au/", tags$img(src="images/AODN-logo.png", height = "80", style ="padding: 10px")),
+                                           style = "background: #66666a; color:white; text-align:center; font-size: small"))
                            
                            # htmlOutput("test")
                          )
