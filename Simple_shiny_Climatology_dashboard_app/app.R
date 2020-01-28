@@ -432,11 +432,26 @@ server <- function(input, output, session){
       }
     }
     
+    if (date == ymd("20200103")) {
+      m <- m %>% 
+        addMarkers(lat = -30.2986, lng = 153.354267, popup = HTML("<b>EAC characteristics near Coffs Harbour</b></br>
+                                                              Location: (-30.2986, 153.254267)</br>
+                                                              20 km from coast</br>
+                                                              26 km wide</br>
+                                                              Speed: 0.50 m/s"),
+                  group = "EAC characteristics") %>%
+        addMarkers(lat = -32.9283, lng = 152.727874, popup = HTML("<b>EAC characteristics near Newcastle</b></br>
+                                                              Location: (-32.9283, 152.727874)</br>
+                                                              89 km from coast</br>
+                                                              Speed: 0.70 m/s"),
+                   group = "EAC characteristics")
+    }
+    
     m <- m %>%     
       # Layers control
       addLayersControl(
         baseGroups = c("SST", "Cold SSTs", "Warm SSTs", "Ocean Colour"),
-        overlayGroups = c("200m isobath"),
+        overlayGroups = c("200m isobath", "EAC characteristics"),
         options = layersControlOptions(collapsed = FALSE, autoZIndex = T),
         position = "topleft"
       )# %>% addFlows(uv_cart_df$lon0, uv_cart_df$lat0, uv_cart_df$lon1, uv_cart_df$lat1, maxThickness = 0.5)
