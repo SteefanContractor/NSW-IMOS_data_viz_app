@@ -6,9 +6,9 @@ library(lubridate)
 library(dplyr)
 library(raster) #
 library(leaflet)
-library(htmltools) # not on server
-library(htmlwidgets) # not on server
-library(geosphere) # not on server
+library(htmltools) 
+library(htmlwidgets) 
+library(geosphere) 
 
 # working directory is where the script is
 basePath <- paste0(normalizePath("./"),"/")
