@@ -8,7 +8,9 @@ library(raster) #
 library(leaflet)
 library(htmltools) 
 library(htmlwidgets) 
-library(geosphere) 
+library(geosphere)
+library(readr)
+library(purrr)
 
 # working directory is where the script is
 basePath <- paste0(normalizePath("./"),"/")
