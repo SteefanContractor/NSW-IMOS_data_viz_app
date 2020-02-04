@@ -28,6 +28,8 @@ load(paste0(basePath, "SST/processedSSTandOC.Rdata"))
 load(paste0(basePath, "HFRadar/HFRadar.RData"))
 load(paste0(basePath, "isobath_200.RData"))
 
+#FUNCTIONS
+
 # Plot climatology
 plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
   nonNA_days <- which(!is.na(Temp_clim_P90[paste(depth),]) & !is.na(Temp_clim_P10[paste(depth),]) & !is.na(Temp_clim_mean[paste(depth),]))
@@ -65,6 +67,21 @@ plot_temp_ts <- function(mean = T, depth = pressures[1], smooth = 1) {
                     plot_bgcolor = 'rgba(236,239,244,0)')
   return(p)
 }
+
+# function to map EAC_char to HTML popup label
+create_popups <- function(lat, lon, coast_dist, speed, coffs) {
+  if(coffs) {
+    popup <- HTML(paste0("<b>EAC characteristics near Coffs Harbour</b></br>
+               Location: (",round(lat,4),",",round(lon,4),")</br>
+               ",round(coast_dist,4)," km from coast</br>
+               Speed: ",round(speed,4)," m/s"))
+  } else {
+    popup <- HTML(paste0("<b>EAC characteristics near Newcastle</b></br>
+               Location: (",round(lat,4),",",round(lon,4),")</br>
+               ",round(coast_dist,4)," km from coast</br>
+               Speed: ",round(speed,4)," m/s"))
+  }
+} 
 
 
 ui <- 
@@ -432,19 +449,14 @@ server <- function(input, output, session){
       }
     }
     
-    if (date == ymd("20200103")) {
+    # Add EAC characteristics popup
+    # get data
+    EAC_char <- EAC_char_month %>% filter(ymd(date) == input$date)
+    popups <- EAC_char %>% dplyr::select(lat, lon, coast_dist, speed, coffs) %>% pmap(.f = create_popups)
+      #apply(EAC_char %>% dplyr::select(lat, lon, coast_dist, speed, coffs), 1, function(x) {lift_dv(create_popups)(x)})
+    if (nrow(EAC_char) > 0) {
       m <- m %>% 
-        addMarkers(lat = -30.2986, lng = 153.354267, popup = HTML("<b>EAC characteristics near Coffs Harbour</b></br>
-                                                              Location: (-30.2986, 153.254267)</br>
-                                                              20 km from coast</br>
-                                                              26 km wide</br>
-                                                              Speed: 0.50 m/s"),
-                  group = "EAC characteristics") %>%
-        addMarkers(lat = -32.9283, lng = 152.727874, popup = HTML("<b>EAC characteristics near Newcastle</b></br>
-                                                              Location: (-32.9283, 152.727874)</br>
-                                                              89 km from coast</br>
-                                                              Speed: 0.70 m/s"),
-                   group = "EAC characteristics")
+        addMarkers(lat = ~EAC_char$lat, lng = ~EAC_char$lon, popup = ~popups, group = "EAC characteristics")
     }
     
     m <- m %>%     

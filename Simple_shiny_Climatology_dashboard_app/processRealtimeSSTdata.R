@@ -8,6 +8,7 @@ library(raster) #
 library(leaflet)
 library(htmltools) # not on server
 library(htmlwidgets) # not on server
+library(geosphere) # not on server
 
 # working directory is where the script is
 basePath <- paste0(normalizePath("./"),"/")
@@ -98,12 +99,59 @@ save(sst_month, sst_10_month, sst_90_month, oc_month, clim_90, clim_10, df, file
 # HF Radar data
 ##########################
 
+# wrapper function for min() that by default removes na (na.rm = T) and returns NA instead of Inf for all NA values
+min_NA <- function(x) {
+  return(ifelse(all(is.na(x)), NA, min(x, na.rm = T)))
+}
+
+# function to find the EAC core location, velocity, and distance from coast
+find_EAC_char <- function(lon, lat, ucur, vcur) {
+  coffs_lat <- -30.29628
+  newc_lat <- -32.91667
+  # find location
+  vcur_min <- apply(vcur, 2, min_NA)
+  # replace any velocities greater than -0.3 with NA
+  vcur_min[which(vcur_min > -0.3)] <- NA
+  if (all(is.na(vcur_min))) {
+    return(NULL)
+  } else {
+    # for the non NA velocities in above, find the index of the lon location
+    lon_ind_vcur_min <- sapply(1:length(lat), function(n) {ifelse(!is.na(vcur_min[n]),
+                                                                  which(vcur[,n] == vcur_min[n]),
+                                                                  NA)})
+    lat_ind_vcur_min <- which(!is.na(lon_ind_vcur_min))
+    lon_ind_vcur_min <- lon_ind_vcur_min[!is.na(lon_ind_vcur_min)]
+    # create a data frame with all necessary attributes
+    # EAC_char <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("lon", "lat", "distance_coast", "ucur", "vcur"))
+    EAC_char <- data.frame(lon = lon[lon_ind_vcur_min], lat = lat[lat_ind_vcur_min],
+                           ucur = mapply(function(x, y) {ucur[x, y]}, x = lon_ind_vcur_min, y = lat_ind_vcur_min),
+                           vcur = mapply(function(x, y) {vcur[x, y]}, x = lon_ind_vcur_min, y = lat_ind_vcur_min))
+    # calculate EAC speed
+    EAC_char <- mutate(EAC_char, speed = sqrt(ucur^2+vcur^2)) 
+    # calculate EAC distance
+    # read coastline data
+    coast <- read_tsv(paste0(basePath, "data/eaccoast.dat"), col_names = c("lon", "lat"), skip = 1)
+    EAC_char <- mutate(EAC_char, coast_lon = as.numeric(sapply(lat, function(x) {coast$lon[which.min(abs(coast$lat - x))]})))
+    EAC_char <- mutate(EAC_char, coast_dist = distVincentySphere(cbind(EAC_char$lon, EAC_char$lat), cbind(EAC_char$coast_lon, EAC_char$lat))/1000)
+    # drop coast_lon column
+    EAC_char <- EAC_char %>% dplyr::select(-c(coast_lon, ucur, vcur))
+    if (max(lat) < coffs_lat) {
+      EAC_char <- slice(EAC_char, which.min(abs(lat - newc_lat)))
+    } else {
+      EAC_char <- slice(EAC_char, which.min(abs(lat - coffs_lat)))
+    }
+    return(EAC_char)
+  }
+  }
+
+# create empty list to contain uv dataframes for each day
 UVCart_month <- sapply(paste(df$date),function(x) NULL)
+# create empty dataframe to contain EAC characteristics
+EAC_char_month <- setNames(data.frame(matrix(ncol = 6, nrow = 0)), c("date","lon","lat","speed","coast_dist", "coffs")) 
 
 for (d in 1:nrow(df)) {
   date <- format(df$date[d], format = "%Y%m%d")
   fnames <- list.files(paste0(basePath, "data/HFRadar/NEWC"), pattern = glob2rx(paste0("*",date,"*.nc")))
-  
   if (length(fnames) > 2) {
     # 9 am 
     nc <- nc_open(paste0(basePath, "data/HFRadar/NEWC/", fnames[1]))
@@ -139,6 +187,11 @@ for (d in 1:nrow(df)) {
     lon <- apply(lon, 1, mean)
     ucur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(vcur_newc)))] <- NA
     vcur_newc[which(!(ucur_qc %in% c(1,2) & vcur_qc %in% c(1,2) & !is.na(ucur_newc)))] <- NA
+    
+    # find EAC characteristics
+    EAC_char <- find_EAC_char(lon, lat, ucur_newc, vcur_newc)
+    if (!is_null(EAC_char)) {EAC_char <- EAC_char %>% mutate(date = date, coffs = F) %>% dplyr::select(date, everything(), coffs)}
+    EAC_char_month <- rbind(EAC_char_month, EAC_char)
     
     lonlat <- expand.grid(lon, lat)
     # w = 1 # scaling factor for arrows
@@ -216,6 +269,11 @@ for (d in 1:nrow(df)) {
     ucur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(vcur_cofh)))] <- NA
     vcur_cofh[which(!(ucur_qc %in% c(1) & vcur_qc %in% c(1) & !is.na(ucur_cofh)))] <- NA
     
+    # find EAC characteristics
+    EAC_char <- find_EAC_char(lon, lat, ucur_cofh, vcur_cofh)
+    if (!is_null(EAC_char)) {EAC_char <- EAC_char %>% mutate(date = date, coffs = T) %>% dplyr::select(date, everything(), coffs)}
+    EAC_char_month <- rbind(EAC_char_month, EAC_char)
+    
     lonlat <- expand.grid(lon, lat)
     # w = 0.11 # scaling factor for arrows
     uv_cart_df <- data.frame(lon0 = lonlat[,1], lat0 = lonlat[,2], ucur = c(ucur_cofh)*w, vcur = c(vcur_cofh)*w)
@@ -258,7 +316,7 @@ for (d in 1:nrow(df)) {
   
   UVCart_month[[d]] <- uv_cart_df
 }
-save(UVCart_month, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
+save(UVCart_month, EAC_char_month, file = paste0(basePath, "data/HFRadar/HFRadar.RData"))
 
 ##################################
 # 200m isobath from gebco (https://download.gebco.net/)
